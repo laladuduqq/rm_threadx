@@ -22,6 +22,8 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_azure_rtos.h"
+#include "SEGGER_RTT.h"
+#include "elog.h"
 #include "iwdg.h"
 #include "stm32f4xx_hal_iwdg.h"
 
@@ -153,6 +155,9 @@ VOID tx_application_define(VOID *first_unused_memory)
         return;
     }
     MX_IWDG_Init();
+    SEGGER_RTT_Init();
+    if (elog_user_init() == ELOG_NO_ERR) 
+    { elog_start();}
     /* USER CODE END MX_USBX_Device_Init_Success */
   }
 }
@@ -166,6 +171,9 @@ void my_thread_entry(ULONG thread_input)
     {
         /* Increment thread counter. */
         my_thread_counter++;
+        log_e("helloworld!!!");
+        log_i("hello world!!");
+        log_d("hello world!!");
         HAL_IWDG_Refresh(&hiwdg);
         /* Sleep for 1 tick. */
         tx_thread_sleep(1);
