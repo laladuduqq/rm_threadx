@@ -1,12 +1,14 @@
 # 创建 bsp 静态库
 add_library(bsp STATIC
     DWT/dwt.c
+    CAN/bsp_can.c
 )
 
 # 设置包含目录
 target_include_directories(bsp
     PUBLIC
         ${CMAKE_CURRENT_SOURCE_DIR}/DWT
+        ${CMAKE_CURRENT_SOURCE_DIR}/CAN
 )
 
 # 链接必要的库

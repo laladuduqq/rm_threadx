@@ -17,8 +17,8 @@ static const struct {
 
 /* 总线管理器实例 */
 static CANBusManager can_bus[CAN_BUS_NUM] = {
-    {.hcan = NULL,.devices = {0},.tx_mutex = {0},.device_count = 0},
-    {.hcan = NULL,.devices = {0},.tx_mutex = {0},.device_count = 0}
+    {.hcan = NULL,.devices = {{0}},.tx_mutex = {0},.device_count = 0},
+    {.hcan = NULL,.devices = {{0}},.tx_mutex = {0},.device_count = 0}
 };
 
 void canbus_init(void) {
