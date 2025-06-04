@@ -171,9 +171,6 @@ void my_thread_entry(ULONG thread_input)
     {
         /* Increment thread counter. */
         my_thread_counter++;
-        log_e("helloworld!!!");
-        log_i("hello world!!");
-        log_d("hello world!!");
         HAL_IWDG_Refresh(&hiwdg);
         /* Sleep for 1 tick. */
         tx_thread_sleep(1);
