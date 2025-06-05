@@ -226,8 +226,11 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
                    rx_header.StdId == bus->devices[i].rx_id && 
                    bus->devices[i].can_handle == hcan) 
                 {
+                    //增加临界区保护，防止memcpy出现问题
+                    UINT old_posture = tx_interrupt_control(TX_INT_DISABLE);
                     memcpy(bus->devices[i].rx_buff, data, rx_header.DLC);
                     bus->devices[i].rx_len = rx_header.DLC;
+                    tx_interrupt_control(old_posture);
                     if(bus->devices[i].can_callback) {
                         bus->devices[i].can_callback(bus->devices[i].can_handle, rx_header.StdId);
                     }
@@ -254,8 +257,11 @@ void HAL_CAN_RxFifo1MsgPendingCallback(CAN_HandleTypeDef *hcan) {
                    rx_header.StdId == bus->devices[i].rx_id && 
                    bus->devices[i].can_handle == hcan) 
                 {
+                    //增加临界区保护，防止memcpy出现问题
+                    UINT old_posture = tx_interrupt_control(TX_INT_DISABLE);
                     memcpy(bus->devices[i].rx_buff, data, rx_header.DLC);
                     bus->devices[i].rx_len = rx_header.DLC;
+                    tx_interrupt_control(old_posture);
                     if(bus->devices[i].can_callback) {
                         bus->devices[i].can_callback(bus->devices[i].can_handle, rx_header.StdId);
                     }
