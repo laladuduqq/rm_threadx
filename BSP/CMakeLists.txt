@@ -4,6 +4,7 @@ add_library(bsp STATIC
     CAN/bsp_can.c
     UART/bsp_uart.c
     SPI/bsp_spi.c
+    FLASH/bsp_flash.c
 )
 
 # 设置包含目录
@@ -13,6 +14,7 @@ target_include_directories(bsp
         ${CMAKE_CURRENT_SOURCE_DIR}/CAN
         ${CMAKE_CURRENT_SOURCE_DIR}/UART
         ${CMAKE_CURRENT_SOURCE_DIR}/SPI
+        ${CMAKE_CURRENT_SOURCE_DIR}/FLASH
 )
 
 # 链接必要的库
