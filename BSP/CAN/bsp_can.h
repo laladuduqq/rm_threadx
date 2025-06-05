@@ -66,6 +66,6 @@ typedef struct
 Can_Device* BSP_CAN_Device_Init(Can_Device_Init_Config_s *config);
 uint8_t CAN_SendMessage(Can_Device *device, uint8_t len);
 uint8_t CAN_SendMessage_hcan(CAN_HandleTypeDef *hcan, CAN_TxHeaderTypeDef *pHeader,
-    const uint8_t aData[], uint32_t *pTxMailbox,uint8_t len);
+                                const uint8_t aData[], uint32_t *pTxMailbox,uint8_t len);
 
 #endif // BSP_CAN_H

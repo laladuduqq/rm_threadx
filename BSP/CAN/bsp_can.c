@@ -216,7 +216,7 @@ void HAL_CAN_RxFifo0MsgPendingCallback(CAN_HandleTypeDef *hcan) {
     while (HAL_CAN_GetRxFifoFillLevel(hcan, CAN_RX_FIFO0)) {
         if(HAL_CAN_GetRxMessage(hcan, CAN_RX_FIFO0, &rx_header, data) == HAL_OK) {
             CANBusManager *bus = NULL;
-            for(uint8_t i=0; i<2; i++) {
+            for(uint8_t i=0; i<CAN_BUS_NUM; i++) {
                 if(can_bus[i].hcan == hcan) {bus = &can_bus[i];break;}
             }
             if(!bus) return;
