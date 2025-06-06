@@ -33,6 +33,7 @@
 #include "SEGGER_RTT.h"
 #include "elog.h"
 #include "offline.h"
+#include "sbus.h"
 #include "systemwatch.h"
 /* USER CODE END Includes */
 
@@ -142,6 +143,7 @@ VOID tx_application_define(VOID *first_unused_memory)
     SystemWatch_Init(&tx_app_byte_pool);
     offline_init(&tx_app_byte_pool);
     INS_TASK_init(&tx_app_byte_pool);
+    Remote_init();
     MX_IWDG_Init();
     log_i("Azure RTOS application initialized successfully.");
     /* USER CODE END MX_USBX_Device_Init_Success */

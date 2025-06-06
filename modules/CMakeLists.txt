@@ -11,6 +11,7 @@ add_library(modules STATIC
         offline/offline.c
         IMU/imu_task.c 
         IMU/imu.c
+        REMOTE/sbus.c
 )
 
 # 设置包含目录
@@ -22,6 +23,7 @@ target_include_directories(modules
         ${CMAKE_CURRENT_SOURCE_DIR}/systemwatch
         ${CMAKE_CURRENT_SOURCE_DIR}/offline
         ${CMAKE_CURRENT_SOURCE_DIR}/IMU
+        ${CMAKE_CURRENT_SOURCE_DIR}/REMOTE
 )
 
 # 链接必要的库
