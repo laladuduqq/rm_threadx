@@ -244,17 +244,37 @@ HAL_StatusTypeDef BSP_SPI_TransAndTrans(SPI_Device* dev, const uint8_t* tx_data1
                                        uint16_t size1, const uint8_t* tx_data2, 
                                        uint16_t size2)
 {
+    SPI_Bus_Manager *bus = NULL;
     HAL_StatusTypeDef status;
-    
-    // 第一次传输
-    status = BSP_SPI_Transmit(dev, tx_data1, size1);
-    if(status != HAL_OK) return status;
-    
-    // 等待第一次传输完成
-    while(HAL_SPI_GetState(dev->hspi) != HAL_SPI_STATE_READY);
-    
-    // 第二次传输
-    return BSP_SPI_Transmit(dev, tx_data2, size2);
+    for(uint8_t i = 0; i < SPI_BUS_NUM; i++) {
+        if(spi_bus[i].hspi == dev->hspi) {
+            bus = &spi_bus[i];
+            break;
+        }
+    }
+    if(!bus) return HAL_ERROR;
+
+    // 获取信号量
+    if(tx_semaphore_get(&bus->tx_sem, TX_NO_WAIT) != TX_SUCCESS) {
+        return HAL_BUSY;
+    }
+
+    bus->active_dev = dev;
+    HAL_GPIO_WritePin(dev->cs_port, dev->cs_pin, GPIO_PIN_RESET);
+    // 阻塞模式连续传输
+    do {
+        // 第一次传输
+        if((status = HAL_SPI_Transmit(dev->hspi, tx_data1, size1, dev->timeout)) != HAL_OK) break;
+        // 第二次传输
+        status = HAL_SPI_Transmit(dev->hspi, tx_data2, size2, dev->timeout);
+    } while(0);
+
+    // 无论成功与否都要恢复CS和释放锁
+    HAL_GPIO_WritePin(dev->cs_port, dev->cs_pin, GPIO_PIN_SET);
+    tx_semaphore_put(&bus->tx_sem);
+    bus->active_dev = NULL;
+
+    return status;
 }
 
 // SPI 接收完成回调
