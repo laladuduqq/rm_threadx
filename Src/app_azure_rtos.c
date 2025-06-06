@@ -135,23 +135,6 @@ VOID tx_application_define(VOID *first_unused_memory)
 
     /* USER CODE BEGIN MX_USBX_Device_Init_Success */
     CHAR *pointer;
-    CHAR *pointer2;
-    
-    // 分配线程栈空间
-    if (tx_byte_allocate(&tx_app_byte_pool, (VOID **) &pointer,
-                        1024, TX_NO_WAIT) != TX_SUCCESS)
-    {
-        return;
-    }
-
-    if (tx_byte_allocate(&tx_app_byte_pool, (VOID **) &pointer2,
-                        1024, TX_NO_WAIT) != TX_SUCCESS)
-    {
-        return;
-    }
-    
-    // 创建线程
-
     DWT_Init(168);    
     SEGGER_RTT_Init();
     if (elog_user_init() == ELOG_NO_ERR) 
@@ -160,6 +143,9 @@ VOID tx_application_define(VOID *first_unused_memory)
     BMI088_init();
     SystemWatch_Init(&tx_app_byte_pool);
     MX_IWDG_Init();
+    // 分配线程栈空间
+    if (tx_byte_allocate(&tx_app_byte_pool, (VOID **) &pointer,
+                        1024, TX_NO_WAIT) != TX_SUCCESS) {return;}
     tx_thread_create(&my_thread,"My_Thread",my_thread_entry,0,pointer,1024,5,5,TX_NO_TIME_SLICE,TX_AUTO_START);
     //tx_thread_create(&dog_thread,"dog_Thread",dog_thread_entry,0,pointer2,1024,4,4,TX_NO_TIME_SLICE,TX_AUTO_START);
     /* USER CODE END MX_USBX_Device_Init_Success */

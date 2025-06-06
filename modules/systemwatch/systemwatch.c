@@ -17,7 +17,6 @@ static volatile uint32_t watch_task_last_active = 0;
 
 // 辅助函数声明
 static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor);
-static void PrintSystemStatus(void);
 
 static void SystemWatch_Task(ULONG thread_input)
 {
@@ -32,20 +31,15 @@ static void SystemWatch_Task(ULONG thread_input)
                 if(taskList[i].dt > TASK_BLOCK_TIMEOUT) {
                     // ThreadX临界区
                     UINT old_posture = tx_interrupt_control(TX_INT_DISABLE);
-                    
                     log_e("\r\n**** Task Blocked Detected! System State Dump ****");
                     DWT_Delay(0.005);
                     log_e("Time: %.3f s", DWT_GetTimeline_s());
                     DWT_Delay(0.005);
                     log_e("----------------------------------------");
                     DWT_Delay(0.005);
-
                     log_e("Blocked Task Information:");
                     DWT_Delay(0.005);
                     PrintTaskInfo(&taskList[i]);
-                    DWT_Delay(0.5);
-
-                    PrintSystemStatus();
                     DWT_Delay(0.5);
                     tx_interrupt_control(old_posture);
                     HAL_NVIC_SystemReset(); 
@@ -91,14 +85,26 @@ void SystemWatch_Init(TX_BYTE_POOL *pool)
 static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor)
 {
     log_e("Name: %s", pxTaskMonitor->name);
-    log_e("Handle: 0x%p", (void*)&pxTaskMonitor->handle);
+    log_e("Handle: 0x%p", (void*)pxTaskMonitor->handle);
     log_e("Last dt: %.3f ms", pxTaskMonitor->dt * 1000.0f);
-}
 
-static void PrintSystemStatus(void)
-{
-    log_e("\r\nSystem Status:");
-    log_e("----------------------------------------");
+    TX_THREAD *thread = pxTaskMonitor->handle;
+    if (thread) {
+        CHAR *stack_start = (CHAR *)thread->tx_thread_stack_start;
+        ULONG stack_size = thread->tx_thread_stack_size;
+        CHAR *stack_highest = (CHAR *)thread->tx_thread_stack_highest_ptr;
+
+        // 注意：Cortex-M 架构栈向下增长
+        ULONG stack_used = (ULONG)(stack_start + stack_size - stack_highest);
+        ULONG stack_free = stack_size - stack_used;
+
+        log_e("Stack start: 0x%p", stack_start);
+        log_e("Stack size: %lu bytes", stack_size);
+        log_e("Stack used: %lu bytes", stack_used);
+        log_e("Stack free: %lu bytes", stack_free);
+    } else {
+        log_e("Thread pointer is NULL!");
+    }
 }
 
 
