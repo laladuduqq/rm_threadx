@@ -4,9 +4,9 @@
 *                         www.segger.com                             *
 **********************************************************************
 
-File          : /home/pan/code/sentry/rm_threadx/base.jdebug
-Created       : 4 Jun 2025 13:10
-Ozone Version : V3.38f
+File          : D:/code/rm_threadx/base.jdebug
+Created       : 6 Jun 2025 17:34
+Ozone Version : V3.38g
 */
 
 /*********************************************************************
@@ -22,8 +22,8 @@ void OnProjectLoad (void) {
   //
   // Dialog-generated settings
   //
-  Project.AddPathSubstitute ("/home/pan/code/sentry/rm_threadx", "$(ProjectDir)");
-  Project.AddPathSubstitute ("/home/pan/code/sentry/rm_threadx", "$(ProjectDir)");
+  Project.AddPathSubstitute ("D:/code/rm_threadx", "$(ProjectDir)");
+  Project.AddPathSubstitute ("d:/code/rm_threadx", "$(ProjectDir)");
   Project.SetDevice ("STM32F407IG");
   Project.SetHostIF ("USB", "");
   Project.SetTargetIF ("SWD");

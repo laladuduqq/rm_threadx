@@ -8,7 +8,7 @@
             "command": "cmake",
             "args": [
                 "--build", "${workspaceFolder}/build/Debug",
-                "-j", "4"           
+                "-j", "8"           
             ],
             "options": {
                 "cwd": "${workspaceFolder}"
@@ -32,9 +32,9 @@
             "problemMatcher": []
         },
         {
-            "label": "JFlash Program (Linux)",
+            "label": "JFlash Program (Windows)",
             "type": "shell",
-            "command": "JFlash",
+            "command": "C:/Program Files/SEGGER/JLink_V840/JFlash.exe",
             "args": [
                 "-openprj", 
                 "${workspaceFolder}/base.jflash",

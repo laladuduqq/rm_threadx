@@ -22,14 +22,14 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_azure_rtos.h"
-#include "SEGGER_RTT.h"
-#include "elog.h"
 #include "iwdg.h"
 #include "stm32f4xx_hal_iwdg.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-
+#include "RGB.h"
+#include "SEGGER_RTT.h"
+#include "elog.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -59,13 +59,14 @@ static UCHAR  ux_device_byte_pool_buffer[UX_DEVICE_APP_MEM_POOL_SIZE];
 static TX_BYTE_POOL ux_device_app_byte_pool;
 
 /* USER CODE BEGIN PV */
-unsigned long my_thread_counter = 0;
 TX_THREAD my_thread;
+TX_THREAD dog_thread;
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
 void my_thread_entry(ULONG thread_input);
+void dog_thread_entry(ULONG thread_input);
 /* USER CODE END PFP */
 
 /**
@@ -76,7 +77,7 @@ void my_thread_entry(ULONG thread_input);
 VOID tx_application_define(VOID *first_unused_memory)
 {
   /* USER CODE BEGIN  tx_application_define */
-
+  (void)first_unused_memory;
   /* USER CODE END  tx_application_define */
 
   VOID *memory_ptr;
@@ -131,6 +132,7 @@ VOID tx_application_define(VOID *first_unused_memory)
 
     /* USER CODE BEGIN MX_USBX_Device_Init_Success */
     CHAR *pointer;
+    CHAR *pointer2;
     
     // 分配线程栈空间
     if (tx_byte_allocate(&tx_app_byte_pool, (VOID **) &pointer,
@@ -138,26 +140,21 @@ VOID tx_application_define(VOID *first_unused_memory)
     {
         return;
     }
-    
-    // 创建线程
-    if (tx_thread_create(&my_thread,
-                        "My Thread",
-                        my_thread_entry,
-                        0,
-                        pointer,
-                        1024,
-                        3,                 // 优先级 (0-31, 0 最高)  
-                        3,                 // 抢占阈值
-                        TX_NO_TIME_SLICE,   // 时间片
-                        TX_AUTO_START)      // 自动启动
-        != TX_SUCCESS)
+
+    if (tx_byte_allocate(&tx_app_byte_pool, (VOID **) &pointer2,
+                        1024, TX_NO_WAIT) != TX_SUCCESS)
     {
         return;
     }
+    
+    // 创建线程
+    tx_thread_create(&my_thread,"My_Thread",my_thread_entry,0,pointer,1024,3,3,TX_NO_TIME_SLICE,TX_AUTO_START);
+    tx_thread_create(&dog_thread,"dog_Thread",dog_thread_entry,0,pointer2,1024,2,2,TX_NO_TIME_SLICE,TX_AUTO_START);
     MX_IWDG_Init();
     SEGGER_RTT_Init();
     if (elog_user_init() == ELOG_NO_ERR) 
     { elog_start();}
+    RGB_init();
     /* USER CODE END MX_USBX_Device_Init_Success */
   }
 }
@@ -170,10 +167,23 @@ void my_thread_entry(ULONG thread_input)
     while(1)
     {
         /* Increment thread counter. */
-        my_thread_counter++;
-        HAL_IWDG_Refresh(&hiwdg);
-        /* Sleep for 1 tick. */
-        tx_thread_sleep(1);
+        RGB_show(LED_Blue);
+        tx_thread_sleep(500);
+        RGB_show(LED_Green);
+        tx_thread_sleep(500);
+        RGB_show(LED_Red);
+        tx_thread_sleep(500);
+    }
+}
+
+void dog_thread_entry(ULONG thread_input)
+{
+  (void)thread_input;
+    /* Enter into a forever loop. */
+    while(1)
+    {
+      HAL_IWDG_Refresh(&hiwdg);
+      tx_thread_sleep(1);
     }
 }
 /* USER CODE END  0 */
