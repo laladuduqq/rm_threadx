@@ -5,6 +5,7 @@
 #include "elog.h"
 #include "imu.h"
 #include "iwdg.h"
+#include "motor_task.h"
 #include "offline.h"
 #include "referee.h"
 #include "sbus.h"
@@ -35,5 +36,7 @@ void robot_init(TX_BYTE_POOL *pool)
     #else
     RefereeInit();
     #endif
+    motor_task_init(pool);
+    
     MX_IWDG_Init();
 }
