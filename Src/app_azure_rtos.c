@@ -22,19 +22,11 @@
 /* Includes ------------------------------------------------------------------*/
 
 #include "app_azure_rtos.h"
-#include "BMI088.h"
-#include "dwt.h"
-#include "imu.h"
-#include "iwdg.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
-#include "RGB.h"
-#include "SEGGER_RTT.h"
+#include "robot_init.h"
 #include "elog.h"
-#include "offline.h"
-#include "sbus.h"
-#include "systemwatch.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -134,17 +126,8 @@ VOID tx_application_define(VOID *first_unused_memory)
     }
 
     /* USER CODE BEGIN MX_USBX_Device_Init_Success */
-    DWT_Init(168);    
-    SEGGER_RTT_Init();
-    if (elog_user_init() == ELOG_NO_ERR) 
-    { elog_start();}
-    RGB_init();
-    BMI088_init();
-    SystemWatch_Init(&tx_app_byte_pool);
-    offline_init(&tx_app_byte_pool);
-    INS_TASK_init(&tx_app_byte_pool);
-    Remote_init();
-    MX_IWDG_Init();
+    base_init();
+    robot_init(&tx_app_byte_pool);
     log_i("Azure RTOS application initialized successfully.");
     /* USER CODE END MX_USBX_Device_Init_Success */
   }
