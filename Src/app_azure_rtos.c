@@ -32,6 +32,7 @@
 #include "RGB.h"
 #include "SEGGER_RTT.h"
 #include "elog.h"
+#include "systemwatch.h"
 /* USER CODE END Includes */
 
 /* Private typedef -----------------------------------------------------------*/
@@ -150,15 +151,17 @@ VOID tx_application_define(VOID *first_unused_memory)
     }
     
     // 创建线程
-    tx_thread_create(&my_thread,"My_Thread",my_thread_entry,0,pointer,1024,3,3,TX_NO_TIME_SLICE,TX_AUTO_START);
-    tx_thread_create(&dog_thread,"dog_Thread",dog_thread_entry,0,pointer2,1024,2,2,TX_NO_TIME_SLICE,TX_AUTO_START);
+
     DWT_Init(168);    
     SEGGER_RTT_Init();
     if (elog_user_init() == ELOG_NO_ERR) 
     { elog_start();}
     RGB_init();
     BMI088_init();
+    SystemWatch_Init(&tx_app_byte_pool);
     MX_IWDG_Init();
+    tx_thread_create(&my_thread,"My_Thread",my_thread_entry,0,pointer,1024,5,5,TX_NO_TIME_SLICE,TX_AUTO_START);
+    //tx_thread_create(&dog_thread,"dog_Thread",dog_thread_entry,0,pointer2,1024,4,4,TX_NO_TIME_SLICE,TX_AUTO_START);
     /* USER CODE END MX_USBX_Device_Init_Success */
   }
 }
@@ -167,16 +170,14 @@ VOID tx_application_define(VOID *first_unused_memory)
 void my_thread_entry(ULONG thread_input)
 {
   (void)thread_input;
+  SystemWatch_RegisterTask(&my_thread,"my_thread");
     /* Enter into a forever loop. */
     while(1)
     {
+        SystemWatch_ReportTaskAlive(&my_thread);
         /* Increment thread counter. */
         RGB_show(LED_Blue);
-        tx_thread_sleep(500);
-        RGB_show(LED_Green);
-        tx_thread_sleep(500);
-        RGB_show(LED_Red);
-        tx_thread_sleep(500);
+        tx_thread_sleep(5);
     }
 }
 
