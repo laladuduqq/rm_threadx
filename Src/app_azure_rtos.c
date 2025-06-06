@@ -61,7 +61,7 @@ static TX_BYTE_POOL ux_device_app_byte_pool;
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-
+void Print_BytePool_Info(TX_BYTE_POOL *pool, const char *name);
 /* USER CODE END PFP */
 
 /**
@@ -128,10 +128,21 @@ VOID tx_application_define(VOID *first_unused_memory)
     /* USER CODE BEGIN MX_USBX_Device_Init_Success */
     base_init();
     robot_init(&tx_app_byte_pool);
+    Print_BytePool_Info(&tx_app_byte_pool, "TX_APP_MEM_POOL");
     log_i("Azure RTOS application initialized successfully.");
     /* USER CODE END MX_USBX_Device_Init_Success */
   }
 }
 
 /* USER CODE BEGIN  0 */
+void Print_BytePool_Info(TX_BYTE_POOL *pool, const char *name)
+{
+    ULONG total = pool->tx_byte_pool_size;
+    ULONG available = pool->tx_byte_pool_available;
+    ULONG used = total - available;
+    UINT fragments = pool->tx_byte_pool_fragments;
+
+    log_i("%s: total=%lu bytes, available=%lu bytes, used=%lu bytes, fragments=%u\n",
+        name, total, available, used, fragments);
+}
 /* USER CODE END  0 */

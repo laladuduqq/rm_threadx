@@ -1,6 +1,7 @@
 #include "BMI088.h"
 #include "RGB.h"
 #include "SEGGER_RTT.h"
+#include "dm_imu.h"
 #include "dwt.h"
 #include "elog.h"
 #include "imu.h"
@@ -30,13 +31,13 @@ void robot_init(TX_BYTE_POOL *pool)
     INS_TASK_init(pool);
     #if defined (GIMBAL_BOARD)
         #if CONTROL_SOURCE == 1
-            //Remote_init();
-            RefereeInit(pool);
+            Remote_init();
+            DM_IMU_Init(pool);
         #endif
     #else
-    RefereeInit();
+    RefereeInit(pool);
     #endif
     motor_task_init(pool);
-    
+
     MX_IWDG_Init();
 }

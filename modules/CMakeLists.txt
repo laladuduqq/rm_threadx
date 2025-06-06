@@ -19,6 +19,7 @@ add_library(modules STATIC
         MOTOR/DJI/dji.c 
         MOTOR/DAMIAO/damiao.c 
         powercontrol/powercontrol.c
+        DM_IMU/dm_imu.c
 )
 
 # 设置包含目录
@@ -36,6 +37,7 @@ target_include_directories(modules
         ${CMAKE_CURRENT_SOURCE_DIR}/MOTOR/DJI 
         ${CMAKE_CURRENT_SOURCE_DIR}/MOTOR/DAMIAO 
         ${CMAKE_CURRENT_SOURCE_DIR}/powercontrol
+        ${CMAKE_CURRENT_SOURCE_DIR}/DM_IMU
 )
 
 # 链接必要的库
