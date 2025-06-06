@@ -3,7 +3,7 @@
 #include "can.h"
 #include "motor_def.h"
 #include "offline.h"
-//#include "powercontroller.h"
+#include "powercontroller.h"
 #include "user_lib.h"
 #include <stdint.h>
 
@@ -463,8 +463,7 @@ void DJIMotorControl(void)
         if (get_device_status(motor->offline_index)==1 || motor->stop_flag == MOTOR_STOP) {
             control_output = 0;
         }
-        else {
-            __disable_irq(); 
+        else { 
             // 根据控制算法计算输出
             switch (motor->motor_settings.control_algorithm) 
             {
@@ -480,11 +479,10 @@ void DJIMotorControl(void)
                     control_output = 0;
                     break;
             }
-            __enable_irq(); 
         }
         // 根据功率控制状态分别处理
         if(motor->motor_settings.PowerControlState == PowerControlState_ON) {
-            //PowerControlDji(motor, control_output);
+            PowerControlDji(motor, control_output);
             power_control_count++;
         } else {
             // 未开启功率控制的直接存储到本地数组
@@ -494,7 +492,7 @@ void DJIMotorControl(void)
 
     // 只有存在需要功率控制的电机时才执行功率分配
     if(power_control_count > 0) {
-        //PowerControlDjiFinalize(dji_motor_list, idx);
+        PowerControlDjiFinalize(dji_motor_list, idx);
     }
     // 第二次遍历：填充发送数据
     for (size_t i = 0; i < idx; ++i) {
@@ -506,7 +504,7 @@ void DJIMotorControl(void)
         int16_t output;
         // 根据功率控制状态选择输出来源
         if(motor->motor_settings.PowerControlState == PowerControlState_ON) {
-            output = 0; //GetPowerControlOutput(num);  // 从功率控制模块获取
+            output = GetPowerControlOutput(num);  // 从功率控制模块获取
         } else {
             output = GetRawMotorOutput(i);      // 从本地数组获取
         }
