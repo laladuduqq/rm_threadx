@@ -24,6 +24,7 @@
 #include "app_azure_rtos.h"
 #include "BMI088.h"
 #include "dwt.h"
+#include "imu.h"
 #include "iwdg.h"
 
 /* Private includes ----------------------------------------------------------*/
@@ -140,6 +141,7 @@ VOID tx_application_define(VOID *first_unused_memory)
     BMI088_init();
     SystemWatch_Init(&tx_app_byte_pool);
     offline_init(&tx_app_byte_pool);
+    INS_TASK_init(&tx_app_byte_pool);
     MX_IWDG_Init();
     log_i("Azure RTOS application initialized successfully.");
     /* USER CODE END MX_USBX_Device_Init_Success */
