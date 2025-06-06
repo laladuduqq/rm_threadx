@@ -25,13 +25,13 @@
 #include "BMI088.h"
 #include "dwt.h"
 #include "iwdg.h"
-#include "stm32f4xx_hal_iwdg.h"
 
 /* Private includes ----------------------------------------------------------*/
 /* USER CODE BEGIN Includes */
 #include "RGB.h"
 #include "SEGGER_RTT.h"
 #include "elog.h"
+#include "offline.h"
 #include "systemwatch.h"
 /* USER CODE END Includes */
 
@@ -62,14 +62,12 @@ static UCHAR  ux_device_byte_pool_buffer[UX_DEVICE_APP_MEM_POOL_SIZE];
 static TX_BYTE_POOL ux_device_app_byte_pool;
 
 /* USER CODE BEGIN PV */
-TX_THREAD my_thread;
-TX_THREAD dog_thread;
+
 /* USER CODE END PV */
 
 /* Private function prototypes -----------------------------------------------*/
 /* USER CODE BEGIN PFP */
-void my_thread_entry(ULONG thread_input);
-void dog_thread_entry(ULONG thread_input);
+
 /* USER CODE END PFP */
 
 /**
@@ -134,7 +132,6 @@ VOID tx_application_define(VOID *first_unused_memory)
     }
 
     /* USER CODE BEGIN MX_USBX_Device_Init_Success */
-    CHAR *pointer;
     DWT_Init(168);    
     SEGGER_RTT_Init();
     if (elog_user_init() == ELOG_NO_ERR) 
@@ -142,40 +139,12 @@ VOID tx_application_define(VOID *first_unused_memory)
     RGB_init();
     BMI088_init();
     SystemWatch_Init(&tx_app_byte_pool);
+    offline_init(&tx_app_byte_pool);
     MX_IWDG_Init();
-    // 分配线程栈空间
-    if (tx_byte_allocate(&tx_app_byte_pool, (VOID **) &pointer,
-                        1024, TX_NO_WAIT) != TX_SUCCESS) {return;}
-    tx_thread_create(&my_thread,"My_Thread",my_thread_entry,0,pointer,1024,5,5,TX_NO_TIME_SLICE,TX_AUTO_START);
-    //tx_thread_create(&dog_thread,"dog_Thread",dog_thread_entry,0,pointer2,1024,4,4,TX_NO_TIME_SLICE,TX_AUTO_START);
+    log_i("Azure RTOS application initialized successfully.");
     /* USER CODE END MX_USBX_Device_Init_Success */
   }
 }
 
 /* USER CODE BEGIN  0 */
-void my_thread_entry(ULONG thread_input)
-{
-  (void)thread_input;
-  SystemWatch_RegisterTask(&my_thread,"my_thread");
-    /* Enter into a forever loop. */
-    while(1)
-    {
-        SystemWatch_ReportTaskAlive(&my_thread);
-        /* Increment thread counter. */
-        RGB_show(LED_Blue);
-        tx_thread_sleep(5);
-    }
-}
-
-void dog_thread_entry(ULONG thread_input)
-{
-  (void)thread_input;
-    /* Enter into a forever loop. */
-    while(1)
-    {
-      BMI088_GET_DATA();
-      HAL_IWDG_Refresh(&hiwdg);
-      tx_thread_sleep(1);
-    }
-}
 /* USER CODE END  0 */
