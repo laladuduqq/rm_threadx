@@ -12,6 +12,9 @@ add_library(modules STATIC
         IMU/imu_task.c 
         IMU/imu.c
         REMOTE/sbus.c
+        referee/crc_rm.c 
+        referee/referee_UI.c 
+        referee/referee.c 
 )
 
 # 设置包含目录
@@ -24,10 +27,11 @@ target_include_directories(modules
         ${CMAKE_CURRENT_SOURCE_DIR}/offline
         ${CMAKE_CURRENT_SOURCE_DIR}/IMU
         ${CMAKE_CURRENT_SOURCE_DIR}/REMOTE
+        ${CMAKE_CURRENT_SOURCE_DIR}/referee
 )
 
 # 链接必要的库
-target_link_libraries(modules stm32cubemx ThreadX tools bsp)
+target_link_libraries(modules stm32cubemx ThreadX tools bsp application)
 target_link_libraries(modules -l:libarm_cortexM4lf_math.a) #链接dsp
 
 # 将 modules 添加到主项目
