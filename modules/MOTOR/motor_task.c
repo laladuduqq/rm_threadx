@@ -30,7 +30,7 @@ void motor_task_init(TX_BYTE_POOL *pool){
         return;
     }
 
-    UINT status = tx_thread_create(&motorTask_thread, "motorTask", motortask, 0,motor_thread_stack, 1024, 7, 7, TX_NO_TIME_SLICE, TX_AUTO_START);
+    UINT status = tx_thread_create(&motorTask_thread, "motorTask", motortask, 0,motor_thread_stack, 1024, 6, 6, TX_NO_TIME_SLICE, TX_AUTO_START);
 
     if(status != TX_SUCCESS) {
         log_e("Failed to create ins task!");
