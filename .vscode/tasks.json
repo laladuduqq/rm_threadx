@@ -29,7 +29,11 @@
                 "-c",
                 "program ./build/Debug/base.elf verify reset exit"
             ],
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
         {
             "label": "JFlash Program (Windows)",
@@ -58,7 +62,11 @@
                 "-c",
                 "program ./build/Debug/base.elf verify reset exit"
             ],
-            "problemMatcher": []
+            "problemMatcher": [],
+            "group": {
+                "kind": "build",
+                "isDefault": true
+            }
         },
     ]
 }
