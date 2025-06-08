@@ -3,7 +3,6 @@
 #include "crc_rm.h"
 #include "offline.h"
 #include "referee_protocol.h"
-#include "stm32f4xx_hal_def.h"
 #include "systemwatch.h"
 #include "usart.h"
 #include <stdint.h>

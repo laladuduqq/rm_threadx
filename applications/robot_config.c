@@ -1,4 +1,5 @@
 #include "robot_config.h"
+#include "elog.h"
 #include "tx_api.h"
 
 //内存分配
@@ -18,4 +19,16 @@ void threadx_free(void *ptr) {
     if (ptr != NULL) {
         tx_byte_release(ptr);
     }
+}
+
+//调试参数
+void Print_BytePool_Info(TX_BYTE_POOL *pool, const char *name)
+{
+    ULONG total = pool->tx_byte_pool_size;
+    ULONG available = pool->tx_byte_pool_available;
+    ULONG used = total - available;
+    UINT fragments = pool->tx_byte_pool_fragments;
+
+    log_i("%s: total=%lu bytes, available=%lu bytes, used=%lu bytes, fragments=%u\n",
+        name, total, available, used, fragments);
 }

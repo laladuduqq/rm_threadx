@@ -1,6 +1,7 @@
 #ifndef ROBOT_CONFIG_H
 #define ROBOT_CONFIG_H
 
+#include "tx_api.h"
 #include <stddef.h>
 //这里是调试和一些关键功能比如内存分配释放等统一上层开关
 //注意：如果需要使用某个功能，请在robot_config.h中打开对应的宏定义
@@ -20,6 +21,9 @@
 //rtos内存分配函数
 void* threadx_malloc(size_t size);
 void threadx_free(void *ptr);
+
+//调试参数
+void Print_BytePool_Info(TX_BYTE_POOL *pool, const char *name);
 
 
 #endif // ROBOT_CONFIG_H
