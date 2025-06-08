@@ -8,6 +8,7 @@
 #include "dji.h"
 #include "imu.h"
 #include "sbus.h"
+#include "usb_user.h"
 #include "user_lib.h"
 #include <stdint.h>
 
@@ -36,9 +37,9 @@
             static Shoot_Ctrl_Cmd_s shoot_cmd_send={0};      // 传递给发射的控制信息
 
             static Chassis_Ctrl_Cmd_s chassis_cmd_send = {0};      // 发送给底盘应用的信息,包括控制信息和UI绘制相关
-            //static Chassis_Upload_Data_s chassis_fetch_data; // 从底盘应用接收的反馈信息信息,底盘功率枪口热量与底盘运动状态等
 
             static board_com_t *board_com = NULL; // 板间通讯实例
+            static struct Sentry_Send_s sentry_send;
             void robot_control_init(void)
             {
                 //订阅 发布注册
@@ -77,7 +78,24 @@
 
                 PubPushMessage(shoot_cmd_pub,(void *)&shoot_cmd_send);
 
-                board_send(&chassis_cmd_send);              
+                board_send(&chassis_cmd_send);   
+                
+                sentry_send.header = 0xaa;
+                sentry_send.current_hp_percent = board_com->Chassis_Upload_Data.current_hp_percent;
+                sentry_send.projectile_allowance_17mm = board_com->Chassis_Upload_Data.projectile_allowance_17mm;  //剩余发弹量
+                sentry_send.power_management_shooter_output = board_com->Chassis_Upload_Data.power_management_shooter_output; // 功率管理 shooter 输出
+                sentry_send.current_hp_percent = board_com->Chassis_Upload_Data.current_hp_percent; // 机器人当前血量百分比
+                sentry_send.outpost_HP = board_com->Chassis_Upload_Data.outpost_HP;     //前哨站血量
+                sentry_send.base_HP = board_com->Chassis_Upload_Data.base_HP;        //基地血量
+                sentry_send.game_progess = board_com->Chassis_Upload_Data.game_progess;
+                sentry_send.game_time = board_com->Chassis_Upload_Data.game_time;
+                sentry_send.mode = 1 - board_com->Chassis_Upload_Data.Robot_Color;
+                sentry_send.roll = INS.Roll;
+                sentry_send.pitch = INS.Pitch * (-1);
+                sentry_send.yaw = INS.Yaw;
+                sentry_send.end = 0x0D;
+
+                usb_user_send(&sentry_send);
             } 
     #else
             static Chassis_referee_Upload_Data_s Chassis_referee_Upload_Data;

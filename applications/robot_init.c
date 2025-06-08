@@ -16,6 +16,7 @@
 #include "shoot/shootcmd.h"
 #include "systemwatch.h"
 #include "robotdef.h"
+#include "usb_user.h"
 
 
 void base_init(void)
@@ -26,6 +27,16 @@ void base_init(void)
     if (elog_user_init() == ELOG_NO_ERR) 
     { elog_start();}
     BMI088_init();
+    //reset cdc_acm
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_RESET);
+    DWT_Delay(0.1);
+    HAL_GPIO_WritePin(GPIOA, GPIO_PIN_12, GPIO_PIN_SET);
+    DWT_Delay(0.1);
+    #if defined (GIMBAL_BOARD)
+    extern void cdc_acm_init(uint8_t busid, uintptr_t reg_base);
+    cdc_acm_init(0, USB_OTG_FS_PERIPH_BASE);
+    usb_user_init();
+    #endif
 }
 void robot_init(TX_BYTE_POOL *pool)
 {
