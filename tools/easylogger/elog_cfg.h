@@ -28,11 +28,16 @@
 
 #ifndef _ELOG_CFG_H_
 #define _ELOG_CFG_H_
+#include "robot_config.h"
 /*---------------------------------------------------------------------------*/
 /* enable log output. */
 #define ELOG_OUTPUT_ENABLE
 /* setting static output log level. range: from ELOG_LVL_ASSERT to ELOG_LVL_VERBOSE */
+#if ROBOT_CONFIG_DEBUG==1
 #define ELOG_OUTPUT_LVL                          ELOG_LVL_VERBOSE
+#else
+#define ELOG_OUTPUT_LVL                          ELOG_LVL_ERROR
+#endif
 /* enable assert check */
 #define ELOG_ASSERT_ENABLE
 /* buffer size for every line's log */

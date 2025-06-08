@@ -1,25 +1,20 @@
 #include "board_com.h"
 #include "can.h"
-#include "dji.h"
-#include "imu.h"
 #include "message_center.h"
-#include "sbus.h"
-#include "user_lib.h"
 #include "offline.h"
 #include "robotdef.h"
-#include <stdint.h>
 #include <string.h>
 #include "referee.h"
-
+#include "dji.h"
+#include "imu.h"
+#include "sbus.h"
+#include "user_lib.h"
+#include <stdint.h>
 
 #define LOG_TAG              "robotcontrol"
 #define LOG_LVL              LOG_LVL_DBG
 #include <elog.h>
 
-
-//部分仅限内部使用函数声明
-static float CalcOffsetAngle(float getyawangle);
-static void RemoteControlSet(Chassis_Ctrl_Cmd_s *Chassis_Ctrl,Shoot_Ctrl_Cmd_s *Shoot_Ctrl,Gimbal_Ctrl_Cmd_s *Gimbal_Ctrl);
 
 #ifdef ONE_BOARD
 
@@ -27,6 +22,10 @@ static void RemoteControlSet(Chassis_Ctrl_Cmd_s *Chassis_Ctrl,Shoot_Ctrl_Cmd_s *
 
 #ifndef ONE_BOARD
     #if defined (GIMBAL_BOARD)
+            //部分仅限内部使用函数声明
+            static float CalcOffsetAngle(float getyawangle);
+            static void RemoteControlSet(Chassis_Ctrl_Cmd_s *Chassis_Ctrl,Shoot_Ctrl_Cmd_s *Shoot_Ctrl,Gimbal_Ctrl_Cmd_s *Gimbal_Ctrl);
+            
             static Publisher_t *gimbal_cmd_pub;            // 云台控制消息发布者
             static Gimbal_Ctrl_Cmd_s gimbal_cmd_send={0};      // 传递给云台的控制信息
 

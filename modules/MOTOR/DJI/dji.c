@@ -6,6 +6,7 @@
 #include "powercontroller.h"
 #include "user_lib.h"
 #include <stdint.h>
+#include "robot_config.h"
 
 
 #define LOG_TAG              "dji"
@@ -219,10 +220,11 @@ static void MotorSenderGrouping(DJIMotor_t *motor, Can_Device_Init_Config_s *con
      }
  }
 
+extern TX_BYTE_POOL tx_app_byte_pool;
 // 电机初始化,返回一个电机实例
 DJIMotor_t *DJIMotorInit(Motor_Init_Config_s *config)
 {
-    DJIMotor_t *DJIMotor = (DJIMotor_t *)malloc(sizeof(DJIMotor_t));
+    DJIMotor_t *DJIMotor = (DJIMotor_t *)threadx_malloc(sizeof(DJIMotor_t));
     if (DJIMotor == NULL) {
         log_e("Failed to allocate memory for DJIMotor\n");
         return NULL;
@@ -248,7 +250,7 @@ DJIMotor_t *DJIMotorInit(Motor_Init_Config_s *config)
     Can_Device *can_dev = BSP_CAN_Device_Init(&can_config);
     if (can_dev == NULL) {
         log_e("Failed to initialize CAN device for DJI motor");
-        free(DJIMotor);
+        threadx_free(DJIMotor);
         return NULL;
     }
     // 保存设备指针

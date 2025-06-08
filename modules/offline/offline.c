@@ -6,6 +6,7 @@
 #include <string.h>
 #include "tim.h"
 #include "tx_api.h"
+#include "robot_config.h"
 
 
 #define LOG_TAG  "offline"
@@ -39,6 +40,8 @@ void offline_init(TX_BYTE_POOL *pool)
     // 初始化管理器
     memset(&offline_manager, 0, sizeof(offline_manager));
 
+
+    #if OFFLINE_Enable == 1
     // 用内存池分配监控线程栈
     CHAR *offline_thread_stack;
     if (tx_byte_allocate(pool, (VOID **)&offline_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
@@ -56,6 +59,7 @@ void offline_init(TX_BYTE_POOL *pool)
     }
 
     HAL_TIM_PWM_Start(&htim4,  TIM_CHANNEL_3);
+    #endif
 
     log_i("Offline task initialized successfully.");
 }
@@ -223,7 +227,11 @@ void beep_ctrl_times(void)
     {
         if (DWT_GetTimeline_ms() - times_tick < BEEP_ON_TIME)
         {
+            #if OFFLINE_Beep_Enable == 1
             beep_set_tune(BEEP_TUNE_VALUE, BEEP_CTRL_VALUE);
+            #else
+            beep_set_tune(0, 0);
+            #endif
             RGB_show(LED_Red);
         }
         else if (DWT_GetTimeline_ms() - times_tick < BEEP_ON_TIME + BEEP_OFF_TIME)

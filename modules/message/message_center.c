@@ -1,6 +1,7 @@
 #include "message_center.h"
 #include "stdlib.h"
 #include "string.h"
+#include "robot_config.h"
 
 #define LOG_TAG              "message"
 #define LOG_LVL              LOG_LVL_DBG
@@ -45,7 +46,7 @@ Publisher_t *PubRegister(char *name, uint8_t data_len)
         }
     } // 遍历完发现尚未创建name对应的话题
     // 在链表尾部创建新的话题并初始化
-    node->next_topic_node = (Publisher_t *)malloc(sizeof(Publisher_t));
+    node->next_topic_node = (Publisher_t *)threadx_malloc(sizeof(Publisher_t));
     memset(node->next_topic_node, 0, sizeof(Publisher_t));
     node->next_topic_node->data_len = data_len;
     strcpy(node->next_topic_node->topic_name, name);
@@ -57,13 +58,13 @@ Subscriber_t *SubRegister(char *name, uint8_t data_len)
 {
     Publisher_t *pub = PubRegister(name, data_len); // 查找或创建该话题的发布者
     // 创建新的订阅者结点,申请内存,注意要memset因为新空间不一定是空的,可能有之前留存的垃圾值
-    Subscriber_t *ret = (Subscriber_t *)malloc(sizeof(Subscriber_t));
+    Subscriber_t *ret = (Subscriber_t *)threadx_malloc(sizeof(Subscriber_t));
     memset(ret, 0, sizeof(Subscriber_t));
     // 对新建的Subscriber进行初始化
     ret->data_len = data_len; // 设定数据长度
     for (size_t i = 0; i < QUEUE_SIZE; ++i)
     { // 给消息队列的每一个元素分配空间,queue里保存的实际上是数据执指针,这样可以兼容不同的数据长度
-        ret->queue[i] = malloc(data_len);
+        ret->queue[i] = threadx_malloc(data_len);
     }
     // 如果是第一个订阅者,特殊处理一下,将first_subs指针指向新建的订阅者(详见文档)
     if (pub->first_subs == NULL)

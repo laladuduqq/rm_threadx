@@ -16,7 +16,7 @@ target_include_directories(tools
 )
 
 # 链接必要的库
-target_link_libraries(tools stm32cubemx ThreadX)
+target_link_libraries(tools stm32cubemx ThreadX application)
 
 # 将 segger 添加到主项目
 target_link_libraries(${PROJECT_NAME} tools)

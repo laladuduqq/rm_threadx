@@ -64,7 +64,7 @@ void RefereeInit(TX_BYTE_POOL *pool)
         return;
     }
 
-    UINT status = tx_thread_create(&refereeTask_recv_thread, "refereeTask", RefereeTask, 0,referee_recv_thread_stack, 1024, 6, 6, TX_NO_TIME_SLICE, TX_AUTO_START);
+    UINT status = tx_thread_create(&refereeTask_recv_thread, "refereeTask", RefereeTask, 0,referee_recv_thread_stack, 1024, 7, 7, TX_NO_TIME_SLICE, TX_AUTO_START);
          status = tx_thread_create(&refereeTask_send_thread, "refereesendTask", referee_send_task, 0,referee_send_thread_stack, 1024, 12, 12, TX_NO_TIME_SLICE, TX_AUTO_START);
 
     if(status != TX_SUCCESS) {

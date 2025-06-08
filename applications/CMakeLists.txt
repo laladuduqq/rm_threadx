@@ -7,6 +7,7 @@ add_library(application STATIC
     shoot/shootcmd.c 
     chassis/chassiscmd.c 
     chassis/chassis_type.c 
+    robot_config.c
 )
 
 # 设置包含目录

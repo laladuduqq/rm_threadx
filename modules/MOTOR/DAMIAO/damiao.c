@@ -1,10 +1,10 @@
 #include "damiao.h"
 #include "arm_math.h"
-#include "dwt.h"
 #include "offline.h"
 #include "tx_api.h"
 #include <stdint.h>
 #include <string.h>
+#include "robot_config.h"
 
 static uint8_t idx;
 static DMMOTOR_t *dmm_motor_list[DM_MOTOR_CNT]= {NULL}; // 会在motor_task任务中遍历该指针数组进行pid计算
@@ -174,9 +174,9 @@ void DMMotorCaliEncoder(DMMOTOR_t *motor)
     tx_thread_sleep(10);
 }
 
-
+extern TX_BYTE_POOL tx_app_byte_pool;
 DMMOTOR_t *DMMotorInit(Motor_Init_Config_s *config,uint32_t DM_Mode_type){
-    DMMOTOR_t *DMMotor = (DMMOTOR_t *)malloc(sizeof(DMMOTOR_t));
+    DMMOTOR_t *DMMotor = (DMMOTOR_t *)threadx_malloc(sizeof(DMMOTOR_t));
     if (DMMotor == NULL) {
         log_e("Failed to allocate memory for DJIMotor\n");
         return NULL;
@@ -201,7 +201,7 @@ DMMOTOR_t *DMMotorInit(Motor_Init_Config_s *config,uint32_t DM_Mode_type){
     Can_Device *can_dev = BSP_CAN_Device_Init(&can_config);
     if (can_dev == NULL) {
         log_e("Failed to initialize CAN device for DJI motor");
-        free(DMMotor);
+        threadx_free(DMMotor);
         return NULL;
     }
     // 保存设备指针

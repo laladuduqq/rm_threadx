@@ -20,7 +20,6 @@
 
 void base_init(void)
 {
-    __HAL_DBGMCU_FREEZE_IWDG();
     RGB_init();
     DWT_Init(168);
     SEGGER_RTT_Init();
@@ -34,9 +33,9 @@ void robot_init(TX_BYTE_POOL *pool)
     offline_init(pool);
     INS_TASK_init(pool);
     #if defined (GIMBAL_BOARD)
+        DM_IMU_Init(pool);
         #if CONTROL_SOURCE == 1
             Remote_init();
-            DM_IMU_Init(pool);
         #endif
     #else
     RefereeInit(pool);
@@ -49,5 +48,4 @@ void robot_init(TX_BYTE_POOL *pool)
     #else
     chassis_task_init(pool);
     #endif
-    MX_IWDG_Init();
 }

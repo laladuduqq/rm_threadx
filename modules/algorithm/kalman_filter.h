@@ -26,9 +26,10 @@
 
 #include "arm_math.h"
 #include "stdint.h"
-#include "stdlib.h"
+#include "robot_config.h"
 
-#define user_malloc malloc
+
+#define user_malloc threadx_malloc
 #define mat arm_matrix_instance_f32
 #define Matrix_Init arm_mat_init_f32
 #define Matrix_Add arm_mat_add_f32

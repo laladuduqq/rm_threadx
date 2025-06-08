@@ -2,7 +2,7 @@
 #include "dwt.h"
 #include "iwdg.h"
 #include "stm32f4xx_hal_iwdg.h"
-#include "tim.h"
+#include "robot_config.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -20,6 +20,10 @@ static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor);
 
 static void SystemWatch_Task(ULONG thread_input)
 {
+    #if SystemWatch_Iwdg_Enable == 1
+    __HAL_DBGMCU_FREEZE_IWDG();
+    MX_IWDG_Init();
+    #endif
     (void)thread_input;
     while(1) {
         HAL_IWDG_Refresh(&hiwdg);
@@ -42,7 +46,10 @@ static void SystemWatch_Task(ULONG thread_input)
                     PrintTaskInfo(&taskList[i]);
                     DWT_Delay(0.5);
                     tx_interrupt_control(old_posture);
+
+                    #if SystemWatch_Reset_Enable == 1
                     HAL_NVIC_SystemReset(); 
+                    #endif
                 }
             }
         }
@@ -59,6 +66,8 @@ void SystemWatch_Init(TX_BYTE_POOL *pool)
     taskCount = 0;
     watch_task_last_active = tx_time_get();
 
+
+    #if SystemWatch_Enable == 1
     // 用内存池分配监控线程栈
     CHAR *watch_thread_stack;
     if (tx_byte_allocate(pool, (VOID **)&watch_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
@@ -78,6 +87,8 @@ void SystemWatch_Init(TX_BYTE_POOL *pool)
     watchTaskHandle = &watch_thread;
 
     SystemWatch_RegisterTask(watchTaskHandle, "WatchTask");
+
+    #endif
 
     log_i("SystemWatch initialized, watch task created.");
 }
