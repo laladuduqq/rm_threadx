@@ -13,22 +13,22 @@
 static TaskMonitor_t taskList[MAX_MONITORED_TASKS];
 static uint8_t taskCount = 0;
 static TX_THREAD *watchTaskHandle;
-static volatile uint32_t watch_task_last_active = 0;
 
 // 辅助函数声明
 static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor);
 
 static void SystemWatch_Task(ULONG thread_input)
 {
-    #if SystemWatch_Iwdg_Enable == 1
-    __HAL_DBGMCU_FREEZE_IWDG();
-    MX_IWDG_Init();
-    #endif
     (void)thread_input;
+
+    #if SystemWatch_Iwdg_Enable == 1
+        __HAL_DBGMCU_FREEZE_IWDG();
+        MX_IWDG_Init();
+    #endif
+    
     while(1) {
         HAL_IWDG_Refresh(&hiwdg);
         taskList[0].dt = DWT_GetDeltaT(&taskList[0].dt_cnt); //自身更新
-        watch_task_last_active = tx_time_get();
         for(uint8_t i = 0; i < taskCount; i++) {
             if(taskList[i].isActive) {
                 // 检查任务执行间隔是否过长
@@ -64,7 +64,6 @@ void SystemWatch_Init(TX_BYTE_POOL *pool)
     // 初始化任务列表
     memset(taskList, 0, sizeof(taskList));
     taskCount = 0;
-    watch_task_last_active = tx_time_get();
 
 
     #if SystemWatch_Enable == 1
