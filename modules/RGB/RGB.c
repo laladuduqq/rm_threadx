@@ -10,11 +10,6 @@ void RGB_init(void)
     HAL_TIM_PWM_Start(&htim5,TIM_CHANNEL_3);
 }
 
-/**
-  * @brief          显示RGB
-  * @param      aRGB:0xaaRRGGBB,'aa' 是透明度,'RR'是红色,'GG'是绿色,'BB'是蓝色
-  * @retval         none
-  */
 void RGB_show(uint32_t aRGB)
 {
     static uint8_t alpha;
