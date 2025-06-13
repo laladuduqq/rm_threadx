@@ -1,9 +1,11 @@
 #include "referee.h"
 #include "bsp_uart.h"
 #include "crc_rm.h"
+#include "dwt.h"
 #include "offline.h"
 #include "referee_protocol.h"
 #include "systemwatch.h"
+#include "tx_port.h"
 #include "usart.h"
 #include <stdint.h>
 #include <string.h>
@@ -58,6 +60,7 @@ void RefereeInit(TX_BYTE_POOL *pool)
         log_e("Failed to allocate stack for refereeTask!");
         return;
     }
+    DWT_Delay(0.1);
     if (tx_byte_allocate(pool, (VOID **)&referee_send_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
         log_e("Failed to allocate stack for refereesendTask!");
         return;
@@ -75,9 +78,9 @@ void RefereeInit(TX_BYTE_POOL *pool)
 void RefereeTask(ULONG thread_input)
 { 
         (void)thread_input;
-        SystemWatch_RegisterTask(&refereeTask_recv_thread, "RefereeTask");
+        //SystemWatch_RegisterTask(&refereeTask_recv_thread, "RefereeTask");
         while (1) {
-            SystemWatch_ReportTaskAlive(&refereeTask_recv_thread);
+            //SystemWatch_ReportTaskAlive(&refereeTask_recv_thread);
             ULONG actual_flags = 0;
             // 等待事件标志，自动清除
             UINT status = tx_event_flags_get(

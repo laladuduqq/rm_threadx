@@ -3,6 +3,7 @@
 #include "iwdg.h"
 #include "stm32f4xx_hal_iwdg.h"
 #include "robot_config.h"
+#include "tx_api.h"
 #include <stdint.h>
 #include <string.h>
 
@@ -13,6 +14,24 @@
 static TaskMonitor_t taskList[MAX_MONITORED_TASKS];
 static uint8_t taskCount = 0;
 static TX_THREAD watchTaskHandle;
+static tx_thread_status_t tx_thread_status[] =
+    {
+        {TX_READY, "READY"},
+        {TX_COMPLETED, "COMPLETED"},
+        {TX_TERMINATED, "TERMINATED"},
+        {TX_SUSPENDED, "SUSPENDED"},
+        {TX_SLEEP, "SLEEP"},
+        {TX_QUEUE_SUSP, "QUEUE_SUSP"},
+        {TX_SEMAPHORE_SUSP, "SEMAPHORE_SUSP"},
+        {TX_EVENT_FLAG, "EVENT_FLAG"},
+        {TX_BLOCK_MEMORY, "BLOCK_MEMORY"},
+        {TX_BYTE_MEMORY, "BYTE_MEMORY"},
+        {TX_IO_DRIVER, "IO_DRIVER"},
+        {TX_FILE, "FILE"},
+        {TX_TCP_IP, "TCP_IP"},
+        {TX_MUTEX_SUSP, "MUTEX_SUSP"},
+        {TX_PRIORITY_CHANGE, "PRIORITY_CHANGE"},
+};
 
 // 辅助函数声明
 static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor);
@@ -29,12 +48,16 @@ static void SystemWatch_Task(ULONG thread_input)
     while(1) {
         HAL_IWDG_Refresh(&hiwdg);
         taskList[0].dt = DWT_GetDeltaT(&taskList[0].dt_cnt); //自身更新
+        taskList[0].last_report_time = DWT_GetTimeline_s();
+        float now = DWT_GetTimeline_s();
         for(uint8_t i = 0; i < taskCount; i++) {
             if(taskList[i].isActive) {
+                float dt_since_last_report = now - taskList[i].last_report_time;
                 // 检查任务执行间隔是否过长
-                if(taskList[i].dt > TASK_BLOCK_TIMEOUT) {
+                if(dt_since_last_report > TASK_BLOCK_TIMEOUT) {
                     // ThreadX临界区
                     UINT old_posture = tx_interrupt_control(TX_INT_DISABLE);
+                    
                     log_e("\r\n**** Task Blocked Detected! System State Dump ****");
                     DWT_Delay(0.005);
                     log_e("Time: %.3f s", DWT_GetTimeline_s());
@@ -45,11 +68,18 @@ static void SystemWatch_Task(ULONG thread_input)
                     DWT_Delay(0.005);
                     PrintTaskInfo(&taskList[i]);
                     DWT_Delay(0.5);
-                    tx_interrupt_control(old_posture);
 
                     #if SystemWatch_Reset_Enable == 1
-                    HAL_NVIC_SystemReset(); 
+                        HAL_NVIC_SystemReset(); 
+                    #else
+                        for (int k=1; k<taskCount;k++) {
+                            tx_thread_terminate(taskList[k].handle);
+                            tx_thread_delete(taskList[k].handle);
+                        }
+                        while (1) {HAL_IWDG_Refresh(&hiwdg);} //进入死循环，
                     #endif
+
+                    tx_interrupt_control(old_posture);
                 }
             }
         }
@@ -96,6 +126,7 @@ void SystemWatch_Init(TX_BYTE_POOL *pool)
 static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor)
 {
     log_e("Name: %s", pxTaskMonitor->name);
+    log_e("status: %s",tx_thread_status[pxTaskMonitor->handle->tx_thread_state].name);
     log_e("Handle: 0x%p", (void*)pxTaskMonitor->handle);
     log_e("Last dt: %.3f ms", pxTaskMonitor->dt * 1000.0f);
 
@@ -146,6 +177,7 @@ int8_t SystemWatch_RegisterTask(TX_THREAD *taskHandle, const char* taskName)
         newTask->name = taskName;
         newTask->dt = DWT_GetDeltaT(&taskList[taskCount].dt_cnt);
         newTask->isActive = 1;
+        newTask->last_report_time = DWT_GetTimeline_s();
 
         taskCount++;
 
@@ -164,6 +196,7 @@ void SystemWatch_ReportTaskAlive(TX_THREAD *taskHandle)
     #if SystemWatch_Enable == 1
         for(uint8_t i = 0; i < taskCount; i++) {
             if(taskList[i].handle == taskHandle) {
+                taskList[i].last_report_time = DWT_GetTimeline_s();
                 taskList[i].dt = DWT_GetDeltaT(&taskList[i].dt_cnt);
                 HAL_IWDG_Refresh(&hiwdg);
                 break;

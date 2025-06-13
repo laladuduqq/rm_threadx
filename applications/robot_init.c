@@ -1,3 +1,12 @@
+/*
+ * @Author: laladuduqq 17503181697@163.com
+ * @Date: 2025-06-06 21:31:47
+ * @LastEditors: laladuduqq 17503181697@163.com
+ * @LastEditTime: 2025-06-13 11:15:06
+ * @FilePath: \rm_threadx\applications\robot_init.c
+ * @Description: 
+ * 
+ */
 #include "BMI088.h"
 #include "RGB.h"
 #include "SEGGER_RTT.h"

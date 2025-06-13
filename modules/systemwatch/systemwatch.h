@@ -2,7 +2,7 @@
  * @Author: laladuduqq 17503181697@163.com
  * @Date: 2025-06-06 18:47:55
  * @LastEditors: laladuduqq 17503181697@163.com
- * @LastEditTime: 2025-06-11 22:55:41
+ * @LastEditTime: 2025-06-13 10:44:55
  * @FilePath: \rm_threadx\modules\systemwatch\systemwatch.h
  * @Description: 
  * 
@@ -18,12 +18,19 @@
 // 任务阻塞判定时间 (s)
 #define TASK_BLOCK_TIMEOUT 1
 
+typedef struct
+{
+    uint8_t code;    /* 状态码 */
+    char *name; /* 名称 */
+} tx_thread_status_t;
+
 typedef struct {
     TX_THREAD* handle;        //任务句柄
     const char* name;        //任务名称
     uint8_t isActive;       //是否在监控
     float dt;              // 更新间隔
     uint32_t dt_cnt;
+    float last_report_time; // 上次上报时间，单位秒
 } TaskMonitor_t;
 
 // 初始化系统监控

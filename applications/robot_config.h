@@ -20,7 +20,7 @@
 
 //systemwatch
 #define SystemWatch_Enable 1 // 开启系统监控功能  //注意下述两个宏定义只有在开启系统监控功能时才会生效
-#define SystemWatch_Reset_Enable 1 // 开启系统监控重置功能
+#define SystemWatch_Reset_Enable 0 // 开启系统监控重置功能
 #define SystemWatch_Iwdg_Enable 1 // 开启看门狗功能
 
 //offline
