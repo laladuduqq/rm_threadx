@@ -12,7 +12,7 @@
 // 静态变量
 static TaskMonitor_t taskList[MAX_MONITORED_TASKS];
 static uint8_t taskCount = 0;
-static TX_THREAD *watchTaskHandle;
+static TX_THREAD watchTaskHandle;
 
 // 辅助函数声明
 static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor);
@@ -67,29 +67,30 @@ void SystemWatch_Init(TX_BYTE_POOL *pool)
 
 
     #if SystemWatch_Enable == 1
-    // 用内存池分配监控线程栈
-    CHAR *watch_thread_stack;
-    if (tx_byte_allocate(pool, (VOID **)&watch_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
-        log_e("Failed to allocate stack for WatchTask!");
-        return;
-    }
+        // 用内存池分配线程栈
+        CHAR *watch_thread_stack;
+        if (tx_byte_allocate(pool, (VOID **)&watch_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
+            log_e("Failed to allocate stack for WatchTask!");
+            return;
+        }
 
-    static TX_THREAD watch_thread;
-    UINT status = tx_thread_create(&watch_thread, "WatchTask", SystemWatch_Task, 0,
-                                   watch_thread_stack, 1024,
-                                   3, 3, TX_NO_TIME_SLICE, TX_AUTO_START);
+        UINT status = tx_thread_create(&watchTaskHandle, "WatchTask", SystemWatch_Task, 0,
+                                    watch_thread_stack, 1024,
+                                    3, 3, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-    if(status != TX_SUCCESS) {
-        log_e("Failed to create SystemWatch task!");
-        return;
-    }
-    watchTaskHandle = &watch_thread;
+        if(status != TX_SUCCESS) {
+            log_e("Failed to create SystemWatch task!");
+            return;
+        }
 
-    SystemWatch_RegisterTask(watchTaskHandle, "WatchTask");
+        SystemWatch_RegisterTask(&watchTaskHandle, "WatchTask");
 
+        log_i("SystemWatch initialized, watch task created.");
+    #else 
+        (void)pool;
+        log_i("SystemWatch is disabled");
     #endif
 
-    log_i("SystemWatch initialized, watch task created.");
 }
 
 static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor)
@@ -120,45 +121,55 @@ static void PrintTaskInfo(TaskMonitor_t *pxTaskMonitor)
 
 int8_t SystemWatch_RegisterTask(TX_THREAD *taskHandle, const char* taskName)
 {
-    if (taskHandle == NULL || taskName == NULL) {
-        return -1;
-    }
-    // 检查任务是否已注册
-    UINT old_posture = tx_interrupt_control(TX_INT_DISABLE);
+    #if SystemWatch_Enable == 1
+        if (taskHandle == NULL || taskName == NULL) {
+            return -1;
+        }
+        // 检查任务是否已注册
+        UINT old_posture = tx_interrupt_control(TX_INT_DISABLE);
 
-    for(uint8_t i = 0; i < taskCount; i++) {
-        if(taskList[i].handle == taskHandle) {
+        for(uint8_t i = 0; i < taskCount; i++) {
+            if(taskList[i].handle == taskHandle) {
+                tx_interrupt_control(old_posture);
+                return -1;
+            }
+        }
+
+        // 检查是否超过最大监控任务数
+        if(taskCount >= MAX_MONITORED_TASKS) {
             tx_interrupt_control(old_posture);
             return -1;
         }
-    }
 
-    // 检查是否超过最大监控任务数
-    if(taskCount >= MAX_MONITORED_TASKS) {
+        TaskMonitor_t* newTask = &taskList[taskCount];
+        newTask->handle = taskHandle;
+        newTask->name = taskName;
+        newTask->dt = DWT_GetDeltaT(&taskList[taskCount].dt_cnt);
+        newTask->isActive = 1;
+
+        taskCount++;
+
         tx_interrupt_control(old_posture);
-        return -1;
-    }
 
-    TaskMonitor_t* newTask = &taskList[taskCount];
-    newTask->handle = taskHandle;
-    newTask->name = taskName;
-    newTask->dt = DWT_GetDeltaT(&taskList[taskCount].dt_cnt);
-    newTask->isActive = 1;
-
-    taskCount++;
-
-    tx_interrupt_control(old_posture);
-
-    return 0;
+        return 0;
+    #else 
+        (void)taskHandle;
+        (void)taskName;
+        return 0;
+    #endif
 }
 
 void SystemWatch_ReportTaskAlive(TX_THREAD *taskHandle)
 {
-    for(uint8_t i = 0; i < taskCount; i++) {
-        if(taskList[i].handle == taskHandle) {
-            taskList[i].dt = DWT_GetDeltaT(&taskList[i].dt_cnt);
-            HAL_IWDG_Refresh(&hiwdg);
-            break;
+    #if SystemWatch_Enable == 1
+        for(uint8_t i = 0; i < taskCount; i++) {
+            if(taskList[i].handle == taskHandle) {
+                taskList[i].dt = DWT_GetDeltaT(&taskList[i].dt_cnt);
+                HAL_IWDG_Refresh(&hiwdg);
+                break;
+            }
         }
-    }
+    #else
+        (void)taskHandle;
+    #endif
 }
