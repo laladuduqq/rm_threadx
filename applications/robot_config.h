@@ -1,3 +1,12 @@
+/*
+ * @Author: laladuduqq 17503181697@163.com
+ * @Date: 2025-06-08 00:35:28
+ * @LastEditors: laladuduqq 17503181697@163.com
+ * @LastEditTime: 2025-06-12 23:56:23
+ * @FilePath: \rm_threadx\applications\robot_config.h
+ * @Description: 
+ * 
+ */
 #ifndef ROBOT_CONFIG_H
 #define ROBOT_CONFIG_H
 
@@ -16,7 +25,7 @@
 
 //offline
 #define OFFLINE_Enable 1 // 开启离线检测功能
-#define OFFLINE_Beep_Enable 1 // 开启离线蜂鸣器功能
+#define OFFLINE_Beep_Enable 0 // 开启离线蜂鸣器功能
 
 //rtos内存分配函数
 void* threadx_malloc(size_t size);

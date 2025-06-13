@@ -1,6 +1,6 @@
 {
-    "cortex-debug.armToolchainPath": "C:/msys64/mingw64/bin/",
-    "cortex-debug.JLinkGDBServerPath": "C:/Program Files (x86)/SEGGER/JLink_V722b/JLinkGDBServer.exe",
+    "cortex-debug.armToolchainPath": "D:/code/toolchain/arm-gnu-toolchain/bin",
+    "cortex-debug.JLinkGDBServerPath": "C:/Program Files/SEGGER/JLink_V840/JLinkGDBServer.exe",
     // 是否检查插件冲突
     "clangd.detectExtensionConflicts": true,
     "clangd.arguments": [

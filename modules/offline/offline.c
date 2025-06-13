@@ -18,15 +18,15 @@ static TX_THREAD offline_thread;
 
 
 //对于beep 部分定义
-#define BEEP_PERIOD   2000
-#define BEEP_ON_TIME  100
+#define BEEP_PERIOD   2000  //注意这里的周期，由于在offline task(10ms)中,尽量保证整除
+#define BEEP_ON_TIME  100   //这里BEEP_ON_TIME BEEP_OFF_TIME 共同影响在周期内的最大beep times（BEEP_PERIOD / （这里BEEP_ON_TIME + BEEP_OFF_TIME））
 #define BEEP_OFF_TIME 100
 
-#define BEEP_TUNE_VALUE 500
+#define BEEP_TUNE_VALUE 500  //这两个部分决定beep的音调，音色
 #define BEEP_CTRL_VALUE 100
 
-#define BEEP_TUNE        TIM4->ARR
-#define BEEP_CTRL        TIM4->CCR3
+#define BEEP_TUNE        TIM4->ARR  //对应的tim的自动重装载值
+#define BEEP_CTRL        TIM4->CCR3 //对应通道的比较值
 
 static uint8_t beep_times;
 // 内部函数声明
@@ -38,30 +38,32 @@ void beep_set_tune(uint16_t tune, uint16_t ctrl);
 void offline_init(TX_BYTE_POOL *pool)
 {
     // 初始化管理器
-    memset(&offline_manager, 0, sizeof(offline_manager));
-
+    memset(&offline_manager, 0, sizeof(offline_manager)); 
 
     #if OFFLINE_Enable == 1
-    // 用内存池分配监控线程栈
-    CHAR *offline_thread_stack;
-    if (tx_byte_allocate(pool, (VOID **)&offline_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
-        log_e("Failed to allocate stack for offlineTask!");
-        return;
-    }
+        // 用内存池分配线程栈
+        CHAR *offline_thread_stack;
+        if (tx_byte_allocate(pool, (VOID **)&offline_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
+            log_e("Failed to allocate stack for offlineTask!");
+            return;
+        }
 
-    UINT status = tx_thread_create(&offline_thread, "offlineTask", offline_task, 0,
-                                   offline_thread_stack, 1024,
-                                   4, 4, TX_NO_TIME_SLICE, TX_AUTO_START);
+        UINT status = tx_thread_create(&offline_thread, "offlineTask", offline_task, 0,
+                                    offline_thread_stack, 1024,
+                                    4, 4, TX_NO_TIME_SLICE, TX_AUTO_START);
 
-    if(status != TX_SUCCESS) {
-        log_e("Failed to create offline task!");
-        return;
-    }
+        if(status != TX_SUCCESS) {
+            log_e("Failed to create offline task!");
+            return;
+        }
 
-    HAL_TIM_PWM_Start(&htim4,  TIM_CHANNEL_3);
+        HAL_TIM_PWM_Start(&htim4,  TIM_CHANNEL_3);
+        
+        log_i("Offline task initialized successfully.");
+    #else
+        (void)pool;
+        log_i("Offline is disabled.");
     #endif
-
-    log_i("Offline task initialized successfully.");
 }
 
 void offline_task(ULONG thread_input)
@@ -91,7 +93,7 @@ void offline_task(ULONG thread_input)
             }
     
             if (current_time - device->last_time > device->timeout_ms) {
-                device->is_offline = true;
+                device->is_offline = STATE_OFFLINE;
                 any_device_offline = true;
                 
                 // 更新最高优先级设备
@@ -114,7 +116,7 @@ void offline_task(ULONG thread_input)
                     }
                 }
             } else {
-                device->is_offline = false;
+                device->is_offline = STATE_ONLINE;
             }
         }
     
@@ -125,7 +127,7 @@ void offline_task(ULONG thread_input)
             // 所有设备都在线，清除报警
             beep_set_times(0);
             beep_set_tune(0, 0);         // 立即关闭蜂鸣器
-            RGB_show(LED_Black);    // 关闭LED
+            RGB_show(LED_Green);              // 表示所有设备都在线
         }
 
         beep_ctrl_times();
@@ -136,58 +138,88 @@ void offline_task(ULONG thread_input)
 
 uint8_t offline_device_register(const OfflineDeviceInit_t* init)
 {
-    if (init == NULL || offline_manager.device_count >= MAX_OFFLINE_DEVICES) {
+    #if OFFLINE_Enable ==1
+        if (init == NULL || offline_manager.device_count >= MAX_OFFLINE_DEVICES) {
+            return OFFLINE_INVALID_INDEX;
+        }
+        
+        uint8_t index = offline_manager.device_count;
+        OfflineDevice_t* device = &offline_manager.devices[index];
+        
+        strncpy(device->name, init->name, sizeof(device->name) - 1);
+        device->timeout_ms = init->timeout_ms;
+        device->level = init->level;
+        device->beep_times = init->beep_times;
+        device->is_offline = STATE_OFFLINE;
+        device->last_time = tx_time_get();
+        device->index = index;
+        device->enable = init->enable;
+        
+        offline_manager.device_count++;
+        return index;
+    #else
+        (void) init;
         return OFFLINE_INVALID_INDEX;
-    }
-    
-    uint8_t index = offline_manager.device_count;
-    OfflineDevice_t* device = &offline_manager.devices[index];
-    
-    strncpy(device->name, init->name, sizeof(device->name) - 1);
-    device->timeout_ms = init->timeout_ms;
-    device->level = init->level;
-    device->beep_times = init->beep_times;
-    device->is_offline = false;
-    device->last_time = tx_time_get();
-    device->index = index;
-    device->enable = init->enable;
-    
-    offline_manager.device_count++;
-    return index;
+    #endif
+
 }
 
 void offline_device_update(uint8_t device_index)
 {
-    if (device_index < offline_manager.device_count) {
-        offline_manager.devices[device_index].last_time = tx_time_get();
-        offline_manager.devices[device_index].dt = DWT_GetDeltaT(&offline_manager.devices[device_index].dt_cnt);
-    }
+    #if OFFLINE_Enable ==1
+        if (device_index < offline_manager.device_count) {
+            offline_manager.devices[device_index].last_time = tx_time_get();
+            offline_manager.devices[device_index].dt = DWT_GetDeltaT(&offline_manager.devices[device_index].dt_cnt);
+        }
+    #else
+        (void)device_index;
+    #endif
 }
 
 void offline_device_enable(uint8_t device_index)
 {
-    if (device_index < offline_manager.device_count) {
-        offline_manager.devices[device_index].enable = OFFLINE_ENABLE;
-    }
+    #if OFFLINE_Enable ==1
+        if (device_index < offline_manager.device_count) {
+            offline_manager.devices[device_index].enable = OFFLINE_ENABLE;
+        }
+    #else
+        (void)device_index;
+    #endif
 }
 
 void offline_device_disable(uint8_t device_index)
 {
-    if (device_index < offline_manager.device_count) {
-        offline_manager.devices[device_index].enable = OFFLINE_DISABLE;
-    }
+    #if OFFLINE_Enable ==1
+        if (device_index < offline_manager.device_count) {
+            offline_manager.devices[device_index].enable = OFFLINE_DISABLE;
+        }
+    #else
+        (void)device_index;
+    #endif
 }
 uint8_t get_device_status(uint8_t device_index){
-    return offline_manager.devices[device_index].is_offline;
+    #if OFFLINE_Enable ==1
+        if(device_index < offline_manager.device_count){
+            return offline_manager.devices[device_index].is_offline;
+        }
+        else {return STATE_ONLINE;}
+    #else
+        (void)device_index;
+        return STATE_ONLINE;
+    #endif
 }
 
 uint8_t get_system_status(void){
     uint8_t status = 0;
-    for (uint8_t i = 0; i < offline_manager.device_count; i++) {
-        if (offline_manager.devices[i].is_offline) {
-            status |= (1 << i);
+
+    #if OFFLINE_Enable ==1
+        for (uint8_t i = 0; i < offline_manager.device_count; i++) {
+            if (offline_manager.devices[i].is_offline) {
+                status |= (1 << i);
+            }
         }
-    }
+    #endif
+
     return status;
 }
 

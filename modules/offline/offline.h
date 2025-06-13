@@ -6,7 +6,7 @@
 #include <stdbool.h>
 
 // 配置定义
-#define MAX_OFFLINE_DEVICES    12      // 最大离线设备数量 
+#define MAX_OFFLINE_DEVICES    12      // 最大离线设备数量，这里根据需要自己修改 
 #define OFFLINE_INVALID_INDEX  0xFF
 
 // 状态定义
@@ -53,12 +53,46 @@ typedef struct {
 } OfflineManager_t;
 
 // 函数声明
+/**
+ * @description: offline模块的初始化
+ * @param {TX_BYTE_POOL} *pool
+ * @return {*}
+ */
 void offline_init(TX_BYTE_POOL *pool);
+/**
+ * @description: 注册设备
+ * @param {OfflineDeviceInit_t*} init
+ * @return 成功返回对应的index，否则则会返回OFFLINE_INVALID_INDEX
+ */
 uint8_t offline_device_register(const OfflineDeviceInit_t* init);
+/**
+ * @description: 更新对应的设备离线状态
+ * @param {uint8_t} device_index
+ * @return {*}
+ */
 void offline_device_update(uint8_t device_index);
+/**
+ * @description: 开启对应设备离线检测
+ * @param {uint8_t} device_index
+ * @return {*}
+ */
 void offline_device_enable(uint8_t device_index);
+/**
+ * @description: 关闭对应设备的离线检测
+ * @param {uint8_t} device_index
+ * @return {*}
+ */
 void offline_device_disable(uint8_t device_index);
+/**
+ * @description: 获取对应设备的离线状态
+ * @param {uint8_t} device_index
+ * @return 设备在线则会返回STATE_ONLINE，否则返回STATE_OFFLINE
+ */
 uint8_t get_device_status(uint8_t device_index);
+/**
+ * @description: 获取所有注册设备的状态和
+ * @return 所有设备在线返回STATE_ONLINE，否则返回STATE_OFFLINE
+ */
 uint8_t get_system_status(void);
 
 #endif /* OFFLINE_H */
