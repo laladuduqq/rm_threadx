@@ -302,6 +302,7 @@ void Calibrate_MPU_Offset(void)
         t+=dt;
         if (t > 12){t=0.0f; break;}
     }
+
     do
     {
         dt = DWT_GetDeltaT(&dt_cnt);
@@ -409,7 +410,7 @@ void Calibrate_MPU_Offset(void)
 
 
 void bmi088_temp_ctrl(void) {
-    PIDCalculate(&BMI088_Data.imu_temp_pid, BMI088_Data.temperature, 40);
+    PIDCalculate(&BMI088_Data.imu_temp_pid, BMI088_Data.temperature, BMI088_Data.TempWhenCali);
     __HAL_TIM_SET_COMPARE(&htim10, TIM_CHANNEL_1, BMI088_Data.imu_temp_pid.Output);
 }
 
