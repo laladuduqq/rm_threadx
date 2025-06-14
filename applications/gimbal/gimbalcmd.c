@@ -25,6 +25,8 @@ static TX_THREAD gimbalTask_thread;
     static Gimbal_Upload_Data_s gimbal_feedback_data; // 回传给cmd的云台状态信息
     static Gimbal_Ctrl_Cmd_s gimbal_cmd_recv;         // 来自cmd的控制信息
     static float small_yaw_offset=0.0f;
+    static const IMU_DATA_T* imu;
+
 
     #define SINE_FREQ_YAW 0.2f           // 正弦运动频率(Hz)
     #define SINE_FREQ_Pitch 1.5f           // 正弦运动频率(Hz)
@@ -37,6 +39,7 @@ static TX_THREAD gimbalTask_thread;
     DMMOTOR_t *pitch_motor = NULL; 
     void gimbal_init(void)
     {
+        imu = INS_GetData();
         Motor_Init_Config_s yaw_config = {
             .offline_device_motor ={
               .name = "6020_big",                        // 设备名称
@@ -85,8 +88,8 @@ static TX_THREAD gimbalTask_thread;
                 .tx_id = 1,
             },
             .controller_param_init_config = {
-                .other_angle_feedback_ptr = &INS.YawTotalAngle,
-                .other_speed_feedback_ptr = &INS.Gyro[2],
+                .other_angle_feedback_ptr = imu->YawTotalAngle,
+                .other_speed_feedback_ptr = &((*imu->gyro)[2]),
                 .lqr_config ={
                     .K ={17.32f,1.0f},
                     .output_max = 2.223,
@@ -122,8 +125,8 @@ static TX_THREAD gimbalTask_thread;
                 .rx_id = 0X206,
             },
             .controller_param_init_config = {
-                .other_angle_feedback_ptr = &INS.Pitch,
-                .other_speed_feedback_ptr = &INS.Gyro[0],
+                .other_angle_feedback_ptr = imu->Pitch,
+                .other_speed_feedback_ptr = &(((const float*)imu->gyro)[0]),
                 .lqr_config ={
                     .K ={44.7214f,3.3411f}, //28.7312f,2.5974f
                     .output_max = 7,
@@ -164,7 +167,7 @@ void gimbal_thread_entry(ULONG thread_input)
          && !get_device_status(pitch_motor->offline_index) ) 
         {
             // 计算相对角度
-            small_yaw_offset = INS.YawTotalAngle - small_yaw->measure.total_angle; 
+            small_yaw_offset = *(imu->YawTotalAngle) - small_yaw->measure.total_angle; 
             if (gimbal_cmd_recv.gimbal_mode != GIMBAL_ZERO_FORCE)
             {
                 DJIMotorEnable(big_yaw);

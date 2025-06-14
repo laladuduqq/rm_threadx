@@ -39,7 +39,6 @@ typedef struct
     uint8_t init;
 
     float dt;
-    float t;
     uint32_t dwt_cnt;
 } INS_t;
 
@@ -57,21 +56,28 @@ typedef struct
 
 
 typedef struct {
-    const float *Yaw;
-    const float *Pitch; 
-    const float *Roll;
-    const float *YawTotalAngle;
-    const float (*gyro)[3];    // 指向float[3]数组的指针
+    const float *Yaw;            
+    const float *Pitch;          
+    const float *Roll;           
+    const float *YawTotalAngle;  
+    const float (*gyro)[3];    // 指针数组
 } IMU_DATA_T;
-
-extern INS_t INS;
 
 void IMU_Param_Correction(IMU_Param_t *param, float gyro[3], float accel[3]);
 void BodyFrameToEarthFrame(const float *vecBF, float *vecEF, float *q);
 void EarthFrameToBodyFrame(const float *vecEF, float *vecBF, float *q);
 void bodyToWord(float32_t gyroBody[3], float32_t roll, float32_t pitch, float32_t yaw, float32_t gyroWorld[3]);
 
-void INS_TASK_init(TX_BYTE_POOL *pool);   
-IMU_DATA_T INS_GetData(void);
+/**
+ * @description: imu_task 初始化
+ * @param {TX_BYTE_POOL} *pool
+ * @return {*}
+ */
+void INS_TASK_init(TX_BYTE_POOL *pool);  
+/**
+ * @description: 获取ins数据
+ * @return const IMU_DATA_T 地址
+ */ 
+const IMU_DATA_T* INS_GetData(void);
 
 #endif

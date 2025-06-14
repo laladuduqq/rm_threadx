@@ -133,11 +133,11 @@ typedef enum
  */
 typedef struct
 {
-    float *other_angle_feedback_ptr; // 角度反馈数据指针,注意电机使用total_angle
-    float *other_speed_feedback_ptr; // 速度反馈数据指针,单位为angle per sec
+    const float *other_angle_feedback_ptr; // 角度反馈数据指针,注意电机使用total_angle
+    const float *other_speed_feedback_ptr; // 速度反馈数据指针,单位为angle per sec
 
-    float *speed_feedforward_ptr;   // 速度前馈数据指针
-    float *current_feedforward_ptr; // 电流前馈数据指针
+    const float *speed_feedforward_ptr;   // 速度前馈数据指针
+    const float *current_feedforward_ptr; // 电流前馈数据指针
 
     PID_Init_Config_s current_PID;
     PID_Init_Config_s speed_PID;

@@ -29,6 +29,7 @@ static float chassis_vx, chassis_vy;     // 将云台系的速度投影到底盘
 static PIDInstance chassis_follow_pid;
 static Subscriber_t *chassis_sub;                  // cmd控制消息订阅者
 static Hit_Check_t hit_check={0};
+static const IMU_DATA_T* imu;
 
 #define GRAVITY_COMP_GAIN 100.0f    // 重力补偿系数，可调
 #define MAX_COMP_OUTPUT 200.0f      // 最大补偿输出限幅
@@ -38,6 +39,8 @@ static float gx, gy;
 extern void ChassisCalculate(float chassis_vx, float chassis_vy, float chassis_wz,float *wheel_ops);
 void ChassisInit(void)
 {
+    imu = INS_GetData();
+
     PID_Init_Config_s config = {.MaxOut = 0.5,
                                 .IntegralLimit = 0.01,
                                 .DeadBand = 1,
@@ -184,16 +187,16 @@ void chassis_thread_entry(ULONG thread_input)
             }
 
             // 计算重力补偿
-            gx = GRAVITY_COMP_GAIN * INS.Pitch ;    // 前后方向补偿
-            gy = GRAVITY_COMP_GAIN * INS.Roll  ;     // 左右方向补偿
+            gx = GRAVITY_COMP_GAIN * (*imu->Pitch) ;    // 前后方向补偿
+            gy = GRAVITY_COMP_GAIN * (*imu->Roll)  ;     // 左右方向补偿
 
             // 限制补偿输出
             gx = float_constrain(gx, -MAX_COMP_OUTPUT, MAX_COMP_OUTPUT);
             gy = float_constrain(gy, -MAX_COMP_OUTPUT, MAX_COMP_OUTPUT);
 
             // 添加死区
-            if (fabs(INS.Pitch) < ANGLE_DEADZONE) gx = 0;
-            if (fabs(INS.Roll) < ANGLE_DEADZONE) gy = 0;
+            if (fabs((*imu->Pitch)) < ANGLE_DEADZONE) gx = 0;
+            if (fabs((*imu->Roll)) < ANGLE_DEADZONE) gy = 0;
 
             // 在云台坐标系下进行补偿
             chassis_cmd_recv.vx += gx;  // 前后方向补偿

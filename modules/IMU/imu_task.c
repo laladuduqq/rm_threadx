@@ -1,10 +1,7 @@
 #include "BMI088.h"
 #include "imu.h"
 #include "QuaternionEKF.h"
-#include "BMI088_reg.h"
 #include "dwt.h"
-#include "stm32f4xx_hal.h"
-#include "stm32f4xx_hal_def.h"
 #include "systemwatch.h"
 #include "tx_api.h"
 #include "user_lib.h"
@@ -14,7 +11,8 @@
 #define LOG_TAG  "ins"
 #include "elog.h"
 
-INS_t INS;
+static INS_t INS;
+static IMU_DATA_T ins_data = {0};  
 static IMU_Param_t IMU_Param;
 static TX_THREAD INS_thread;
 static BMI088_GET_Data_t BMI088_GET_Data;
@@ -37,7 +35,7 @@ static void InitQuaternion(float *init_q4)
         acc_init[0] += (*BMI088_GET_Data.acc)[0];
         acc_init[1] += (*BMI088_GET_Data.acc)[1];
         acc_init[2] += (*BMI088_GET_Data.acc)[2];
-        HAL_Delay(1);
+        DWT_Delay(0.001);
     }
     for (uint8_t i = 0; i < 3; ++i)
         acc_init[i] /= 100;
@@ -74,72 +72,69 @@ void INS_Init(void)
 void INSTask(ULONG thread_input)
 {
     (void)(thread_input);
-    INS_Init();
-    static uint32_t count = 0;
     const float gravity[3] = {0, 0, 9.81f};
     SystemWatch_RegisterTask(&INS_thread, "INS Task");
     for (;;) {
         SystemWatch_ReportTaskAlive(&INS_thread);
-
         INS.dt = DWT_GetDeltaT(&INS.dwt_cnt);
-        INS.t += INS.dt;
-    
         // ins update
-        if ((count % 1) == 0)
+        BMI088_GET_Data = BMI088_GET_DATA();
+        INS.Accel[0] = (*BMI088_GET_Data.acc)[0];
+        INS.Accel[1] = (*BMI088_GET_Data.acc)[1];
+        INS.Accel[2] = (*BMI088_GET_Data.acc)[2];
+        INS.Gyro[0]  = (*BMI088_GET_Data.gyro)[0];
+        INS.Gyro[1]  = (*BMI088_GET_Data.gyro)[1];
+        INS.Gyro[2]  = (*BMI088_GET_Data.gyro)[2];
+    
+        // demo function,用于修正安装误差,可以不管
+        IMU_Param_Correction(&IMU_Param, INS.Gyro, INS.Accel);
+    
+        // 计算重力加速度矢量和b系的XY两轴的夹角,可用作功能扩展,本demo暂时没用
+        // INS.atanxz = -atan2f(INS.Accel[X], INS.Accel[Z]) * 180 / PI;
+        // INS.atanyz = atan2f(INS.Accel[Y], INS.Accel[Z]) * 180 / PI;
+    
+        // 核心函数,EKF更新四元数
+        IMU_QuaternionEKF_Update(INS.Gyro[0], INS.Gyro[1], INS.Gyro[2], INS.Accel[0], INS.Accel[1], INS.Accel[2], INS.dt);
+    
+        memcpy(INS.q, QEKF_INS.q, sizeof(QEKF_INS.q));
+    
+        // 机体系基向量转换到导航坐标系，本例选取惯性系为导航系
+        BodyFrameToEarthFrame(xb, INS.xn, INS.q);
+        BodyFrameToEarthFrame(yb, INS.yn, INS.q);
+        BodyFrameToEarthFrame(zb, INS.zn, INS.q);
+    
+        // 将重力从导航坐标系n转换到机体系b,随后根据加速度计数据计算运动加速度
+        float gravity_b[3];
+        EarthFrameToBodyFrame(gravity, gravity_b, INS.q);
+        for (uint8_t i = 0; i < 3; ++i) // 同样过一个低通滤波
         {
-            BMI088_GET_Data = BMI088_GET_DATA();
-            INS.Accel[0] = (*BMI088_GET_Data.acc)[0];
-            INS.Accel[1] = (*BMI088_GET_Data.acc)[1];
-            INS.Accel[2] = (*BMI088_GET_Data.acc)[2];
-            INS.Gyro[0]  = (*BMI088_GET_Data.gyro)[0];
-            INS.Gyro[1]  = (*BMI088_GET_Data.gyro)[1];
-            INS.Gyro[2]  = (*BMI088_GET_Data.gyro)[2];
-    
-            // demo function,用于修正安装误差,可以不管,本demo暂时没用
-            IMU_Param_Correction(&IMU_Param, INS.Gyro, INS.Accel);
-    
-            // 计算重力加速度矢量和b系的XY两轴的夹角,可用作功能扩展,本demo暂时没用
-            // INS.atanxz = -atan2f(INS.Accel[X], INS.Accel[Z]) * 180 / PI;
-            // INS.atanyz = atan2f(INS.Accel[Y], INS.Accel[Z]) * 180 / PI;
-    
-            // 核心函数,EKF更新四元数
-            IMU_QuaternionEKF_Update(INS.Gyro[0], INS.Gyro[1], INS.Gyro[2], INS.Accel[0], INS.Accel[1], INS.Accel[2], INS.dt);
-    
-            memcpy(INS.q, QEKF_INS.q, sizeof(QEKF_INS.q));
-    
-            // 机体系基向量转换到导航坐标系，本例选取惯性系为导航系
-            BodyFrameToEarthFrame(xb, INS.xn, INS.q);
-            BodyFrameToEarthFrame(yb, INS.yn, INS.q);
-            BodyFrameToEarthFrame(zb, INS.zn, INS.q);
-    
-            // 将重力从导航坐标系n转换到机体系b,随后根据加速度计数据计算运动加速度
-            float gravity_b[3];
-            EarthFrameToBodyFrame(gravity, gravity_b, INS.q);
-            for (uint8_t i = 0; i < 3; ++i) // 同样过一个低通滤波
-            {
-                INS.MotionAccel_b[i] = (INS.Accel[i] - gravity_b[i]) * INS.dt / (INS.AccelLPF + INS.dt) + INS.MotionAccel_b[i] * INS.AccelLPF / (INS.AccelLPF + INS.dt);
-            }
-            BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q); // 转换回导航系n
-    
-            INS.Yaw = QEKF_INS.Yaw;
-            INS.Pitch = QEKF_INS.Pitch;
-            INS.Roll = QEKF_INS.Roll;
-            INS.YawTotalAngle = QEKF_INS.YawTotalAngle;
-            INS.YawRoundCount = QEKF_INS.YawRoundCount;
+            INS.MotionAccel_b[i] = (INS.Accel[i] - gravity_b[i]) * INS.dt / (INS.AccelLPF + INS.dt) + INS.MotionAccel_b[i] * INS.AccelLPF / (INS.AccelLPF + INS.dt);
         }
+        BodyFrameToEarthFrame(INS.MotionAccel_b, INS.MotionAccel_n, INS.q); // 转换回导航系n
+    
+        INS.Yaw = QEKF_INS.Yaw;
+        INS.Pitch = QEKF_INS.Pitch;
+        INS.Roll = QEKF_INS.Roll;
+        INS.YawTotalAngle = QEKF_INS.YawTotalAngle;
+        INS.YawRoundCount = QEKF_INS.YawRoundCount;
     
         // temperature control
-        if ((count % 2) == 0)
-        {
-            // 500hz
-            bmi088_temp_ctrl();
-        } 
+        bmi088_temp_ctrl();
         tx_thread_sleep(1);
     }    
 }
 
 void INS_TASK_init(TX_BYTE_POOL *pool)
 {
+    // 在任务初始化时设置指针
+    ins_data.Yaw = &(INS.Yaw);                
+    ins_data.Pitch = &(INS.Pitch);            
+    ins_data.Roll = &(INS.Roll);   
+    ins_data.YawTotalAngle = &(INS.YawTotalAngle);  
+    ins_data.gyro = (const float (*)[3])&(INS.Gyro); 
+
+    INS_Init();
+
     // 用内存池分配监控线程栈
     CHAR *ins_thread_stack;
     if (tx_byte_allocate(pool, (VOID **)&ins_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
@@ -157,13 +152,7 @@ void INS_TASK_init(TX_BYTE_POOL *pool)
     log_i("INS task created successfully");
 }
 
-IMU_DATA_T INS_GetData(void)
+const IMU_DATA_T* INS_GetData(void)
 {
-    IMU_DATA_T data;
-    data.Yaw = &INS.Yaw;
-    data.Pitch = &INS.Pitch;
-    data.Roll = &INS.Roll;
-    data.YawTotalAngle = &INS.YawTotalAngle;
-    data.gyro = (const float (*)[3])&INS.Gyro;    // 使用类型转换确保类型匹配
-    return data;
+    return &ins_data;
 }

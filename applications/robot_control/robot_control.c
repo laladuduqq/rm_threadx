@@ -40,8 +40,11 @@
 
             static board_com_t *board_com = NULL; // 板间通讯实例
             static struct Sentry_Send_s sentry_send;
+            static const IMU_DATA_T* imu;
             void robot_control_init(void)
             {
+                imu = INS_GetData();
+
                 //订阅 发布注册
                 gimbal_cmd_pub = PubRegister("gimbal_cmd", sizeof(Gimbal_Ctrl_Cmd_s));
                 gimbal_feed_sub = SubRegister("gimbal_feed", sizeof(Gimbal_Upload_Data_s));
@@ -90,9 +93,9 @@
                 sentry_send.game_progess = board_com->Chassis_Upload_Data.game_progess;
                 sentry_send.game_time = board_com->Chassis_Upload_Data.game_time;
                 sentry_send.mode = 1 - board_com->Chassis_Upload_Data.Robot_Color;
-                sentry_send.roll = INS.Roll;
-                sentry_send.pitch = INS.Pitch * (-1);
-                sentry_send.yaw = INS.Yaw;
+                sentry_send.roll = *imu->Roll;
+                sentry_send.pitch = *imu->Pitch * (-1);
+                sentry_send.yaw = *imu->Yaw;
                 sentry_send.end = 0x0D;
 
                 usb_user_send(&sentry_send);
