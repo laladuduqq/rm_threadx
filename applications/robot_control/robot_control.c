@@ -63,9 +63,6 @@
                         .can_handle = &hcan2,
                         .tx_id = GIMBAL_ID,
                         .rx_id = CHASSIS_ID,
-                        .tx_mode = CAN_MODE_BLOCKING,
-                        .rx_mode = CAN_MODE_IT,
-                        .can_callback = board_recv
                     }
                 };
                 board_com = board_com_init(&board_com_config);
@@ -81,24 +78,7 @@
 
                 PubPushMessage(shoot_cmd_pub,(void *)&shoot_cmd_send);
 
-                board_send(&chassis_cmd_send);   
-                
-                sentry_send.header = 0xaa;
-                sentry_send.current_hp_percent = board_com->Chassis_Upload_Data.current_hp_percent;
-                sentry_send.projectile_allowance_17mm = board_com->Chassis_Upload_Data.projectile_allowance_17mm;  //剩余发弹量
-                sentry_send.power_management_shooter_output = board_com->Chassis_Upload_Data.power_management_shooter_output; // 功率管理 shooter 输出
-                sentry_send.current_hp_percent = board_com->Chassis_Upload_Data.current_hp_percent; // 机器人当前血量百分比
-                sentry_send.outpost_HP = board_com->Chassis_Upload_Data.outpost_HP;     //前哨站血量
-                sentry_send.base_HP = board_com->Chassis_Upload_Data.base_HP;        //基地血量
-                sentry_send.game_progess = board_com->Chassis_Upload_Data.game_progess;
-                sentry_send.game_time = board_com->Chassis_Upload_Data.game_time;
-                sentry_send.mode = 1 - board_com->Chassis_Upload_Data.Robot_Color;
-                sentry_send.roll = *imu->Roll;
-                sentry_send.pitch = *imu->Pitch * (-1);
-                sentry_send.yaw = *imu->Yaw;
-                sentry_send.end = 0x0D;
-
-                usb_user_send(&sentry_send);
+                board_com_send((uint8_t *)&chassis_cmd_send, sizeof(Chassis_Ctrl_Cmd_s));   
             } 
     #else
             static Chassis_referee_Upload_Data_s Chassis_referee_Upload_Data;
@@ -122,9 +102,6 @@
                         .can_handle = &hcan2,
                         .tx_id = CHASSIS_ID,
                         .rx_id = GIMBAL_ID,
-                        .tx_mode = CAN_MODE_BLOCKING,
-                        .rx_mode = CAN_MODE_IT,
-                        .can_callback = board_recv
                     }
                 };
                 board_com = board_com_init(&board_com_config);
@@ -142,11 +119,11 @@
                 }
                 else
                 {
-                    chassis_cmd_send = *(Chassis_Ctrl_Cmd_s *)BoardRead();
+                    chassis_cmd_send = *(Chassis_Ctrl_Cmd_s *)board_com_get_data();
                 }
                 PubPushMessage(chassis_cmd_pub, (void *)&chassis_cmd_send);
                 referee_to_gimbal(&Chassis_referee_Upload_Data);
-                board_send(&Chassis_referee_Upload_Data);     
+                board_com_send((uint8_t *)&Chassis_referee_Upload_Data,sizeof(Chassis_referee_Upload_Data_s));     
             } 
     #endif 
 
@@ -319,22 +296,12 @@ static void RemoteControlSet(Chassis_Ctrl_Cmd_s *Chassis_Ctrl,Shoot_Ctrl_Cmd_s *
     else
     {
         // 处理离线状态
-        if (board_com->Chassis_Upload_Data.game_progess == 4)
-        {
-            Gimbal_Ctrl->gimbal_mode = GIMBAL_AUTO_MODE;
-            Chassis_Ctrl->chassis_mode = CHASSIS_AUTO_MODE;
-            Shoot_Ctrl->shoot_mode = SHOOT_ON;
-            Shoot_Ctrl->friction_mode = FRICTION_ON;    
-        }
-        else
-        {
             Gimbal_Ctrl->gimbal_mode = GIMBAL_ZERO_FORCE;
             Chassis_Ctrl->chassis_mode = CHASSIS_ZERO_FORCE;
             Shoot_Ctrl->shoot_mode = SHOOT_OFF;
             Shoot_Ctrl->friction_mode = FRICTION_OFF;
             Shoot_Ctrl->load_mode = LOAD_STOP;
             memset(Chassis_Ctrl, 0, sizeof(Chassis_Ctrl_Cmd_s));
-        }
     }
 }
 #endif

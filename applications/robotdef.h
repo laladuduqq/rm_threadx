@@ -26,15 +26,15 @@ extern "C"{
 
 /* 机器人通讯定义*/
 
-#define CONTROL_SOURCE 1  //sbus遥控器为1，图传0304为2，图传遥控器为3
+#define CONTROL_SOURCE 1  //dt7遥控器为0 sbus遥控器为1，图传0304为2，图传遥控器为3
 
 //单板与多板定义
 //#define ONE_BOARD // 单板控制整车
 
 #ifndef ONE_BOARD // 多板控制整车 （注意只能有一个生效）
     #if defined (ENGINEER_MODE) || defined (INFANTRY_MODE) || defined (SENTRY_MODE) || defined (HERO_MODE)
-        //#define CHASSIS_BOARD //底盘板
-        #define GIMBAL_BOARD  //云台板
+        #define CHASSIS_BOARD //底盘板
+        //#define GIMBAL_BOARD  //云台板
 
         #define GIMBAL_ID 0X310
         #define CHASSIS_ID 0X311
@@ -129,6 +129,8 @@ extern "C"{
     #define GYRO2GIMBAL_DIR_ROLL 1  // 陀螺仪数据相较于云台的roll的方向,1为相同,-1为相反
 
 #endif
+
+#pragma pack(1)
 
 // 云台模式设置
 typedef enum
@@ -233,6 +235,7 @@ typedef struct
     float wz;
 } Chassis_Upload_Data_s;
 
+#pragma pack()
 
 #ifdef __cplusplus
 }

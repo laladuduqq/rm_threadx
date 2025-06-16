@@ -60,7 +60,7 @@ void RefereeInit(TX_BYTE_POOL *pool)
         log_e("Failed to allocate stack for refereeTask!");
         return;
     }
-    DWT_Delay(0.1);
+    DWT_Delay(0.5);
     if (tx_byte_allocate(pool, (VOID **)&referee_send_thread_stack, 1024, TX_NO_WAIT) != TX_SUCCESS) {
         log_e("Failed to allocate stack for refereesendTask!");
         return;
