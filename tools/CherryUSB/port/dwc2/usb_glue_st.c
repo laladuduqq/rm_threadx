@@ -186,6 +186,7 @@ uint32_t usbd_get_dwc2_gccfg_conf(uint32_t reg_base)
 #if __has_include("stm32h7xx.h") || __has_include("stm32f7xx.h") || __has_include("stm32l4xx.h")
     return (1 << 16);
 #else
+    (void)reg_base;
     return ((1 << 16) | (1 << 21));
 #endif
 #endif
@@ -212,6 +213,7 @@ uint32_t usbh_get_dwc2_gccfg_conf(uint32_t reg_base)
 #if __has_include("stm32h7xx.h") || __has_include("stm32f7xx.h") || __has_include("stm32l4xx.h")
     return (1 << 16);
 #else
+    (void)reg_base;
     return ((1 << 16) | (1 << 21));
 #endif
 #endif

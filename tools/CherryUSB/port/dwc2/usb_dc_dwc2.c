@@ -351,6 +351,8 @@ static void dwc2_ep0_start_read_setup(uint8_t busid, uint8_t *psetup)
     USB_OTG_OUTEP(0U)->DOEPDMA = (uint32_t)psetup;
     /* EP enable */
     USB_OTG_OUTEP(0U)->DOEPCTL |= USB_OTG_DOEPCTL_EPENA | USB_OTG_DOEPCTL_USBAEP;
+#else 
+    (void)psetup;
 #endif
 }
 

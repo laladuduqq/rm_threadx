@@ -40,6 +40,13 @@ add_executable(${CMAKE_PROJECT_NAME})
 # Add STM32CubeMX generated sources
 add_subdirectory(cmake/stm32cubemx)
 
+set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_ll_adc.c
+    ${CMAKE_CURRENT_SOURCE_DIR}/../../Drivers/STM32F4xx_HAL_Driver/Src/stm32f4xx_hal_flash_ex.c
+    PROPERTIES 
+    COMPILE_FLAGS "-Wno-pedantic -Wno-unused-parameter"
+)
+
 # 自动查找所有子目录中的 CMakeLists.txt (除了 cmake 目录)
 file(GLOB_RECURSE CMAKE_FILES 
     LIST_DIRECTORIES false 

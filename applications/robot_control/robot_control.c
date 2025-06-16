@@ -41,6 +41,7 @@
             static board_com_t *board_com = NULL; // 板间通讯实例
             static struct Sentry_Send_s sentry_send;
             static const IMU_DATA_T* imu;
+            static vcom_receive_t* vcom_receive;
             void robot_control_init(void)
             {
                 imu = INS_GetData();
@@ -66,6 +67,9 @@
                     }
                 };
                 board_com = board_com_init(&board_com_config);
+                
+                vcom_receive = usb_user_get_vcom_receive();
+
             }
 
             void robot_control(void)
@@ -77,7 +81,7 @@
                 PubPushMessage(gimbal_cmd_pub, (void *)&gimbal_cmd_send);
 
                 PubPushMessage(shoot_cmd_pub,(void *)&shoot_cmd_send);
-
+                usb_user_send(&sentry_send);
                 board_com_send((uint8_t *)&chassis_cmd_send, sizeof(Chassis_Ctrl_Cmd_s));   
             } 
     #else

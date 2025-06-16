@@ -8,7 +8,6 @@ add_library(tools STATIC
     easylogger/elog_utils.c
     CherryUSB/core/usbd_core.c 
     CherryUSB/class/cdc/usbd_cdc_acm.c 
-    CherryUSB/osal/usb_osal_threadx.c 
     CherryUSB/port/dwc2/usb_dc_dwc2.c 
     CherryUSB/port/dwc2/usb_glue_st.c
 )
@@ -23,6 +22,12 @@ target_include_directories(tools
         ${CMAKE_CURRENT_SOURCE_DIR}/CherryUSB/common 
         ${CMAKE_CURRENT_SOURCE_DIR}/CherryUSB/port/dwc2 
         ${CMAKE_CURRENT_SOURCE_DIR}/CherryUSB/class/hub
+)
+
+set_source_files_properties(
+    ${CMAKE_CURRENT_SOURCE_DIR}/CherryUSB/core/usbh_core.h 
+    PROPERTIES 
+    COMPILE_FLAGS "-Wno-pedantic -Wno-unused-parameter"
 )
 
 # 链接必要的库
